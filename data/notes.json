@@ -1,0 +1,22 @@
+[
+  {
+    "id": "root",
+    "type": "folder",
+    "title": "Knowledge",
+    "parentId": null,
+    "tags": [],
+    "createdAt": "2025-01-01T00:00:00.000Z",
+    "updatedAt": "2025-01-01T00:00:00.000Z"
+  },
+  {
+    "id": "quickstart",
+    "type": "note",
+    "title": "ALF Research Template",
+    "parentId": "root",
+    "tags": ["template", "research"],
+    "content": "# Research Brief\n\n## TL;DR\n\n- Summarize findings in 3 bullets.\n\n## Bullets\n\n- Key point 1\n- Key point 2\n\n## Narrative\n\nShort narrative with citations inline.\n\n## Sources\n\n| URL | Quote | Author | Date |\n| --- | --- | --- | --- |\n| https://example.com | \"quote\" | Doe | 2024-09-01 |",
+    "createdAt": "2025-01-01T00:00:00.000Z",
+    "updatedAt": "2025-01-01T00:00:00.000Z"
+  }
+]
+
