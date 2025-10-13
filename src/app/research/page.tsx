@@ -1,7 +1,10 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState, useEffect } from "react";
 import { markdownToHtml } from "@/lib/markdown";
+import { supabase } from "@/lib/supabase";
+import { toast } from "sonner";
+import ResponsiveMarkdown from "@/components/ResponsiveMarkdown";
 
 export default function ResearchStreamPage() {
   const [query, setQuery] = useState(
@@ -10,6 +13,9 @@ export default function ResearchStreamPage() {
   const [markdown, setMarkdown] = useState<string>("");
   const [running, setRunning] = useState(false);
   const [logs, setLogs] = useState<{ type: string; message: string }[]>([]);
+  const [saving, setSaving] = useState(false);
+  const [noteTitle, setNoteTitle] = useState("");
+  const [tags, setTags] = useState("");
   const abortRef = useRef<AbortController | null>(null);
 
   const html = useMemo(() => markdownToHtml(markdown), [markdown]);
@@ -22,7 +28,7 @@ export default function ResearchStreamPage() {
     const ac = new AbortController();
     abortRef.current = ac;
     try {
-      const res = await fetch("/api/agents/research/sse", {
+      const res = await fetch("/api/agents/research", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ query }),
@@ -93,6 +99,43 @@ export default function ResearchStreamPage() {
     abortRef.current?.abort();
   }
 
+  async function saveToSupabase() {
+    if (!markdown.trim()) {
+      toast.error("No content to save");
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const title = noteTitle.trim() || generateTitle(query);
+      const tagArray = tags.split(',').map(t => t.trim()).filter(Boolean);
+
+      const { data, error } = await supabase
+        .from('research_notes')
+        .insert({
+          title,
+          content: markdown,
+          tags: tagArray,
+          query: query
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      toast.success("Research note saved successfully!");
+      setNoteTitle("");
+      setTags("");
+      setLogs((l) => [...l, { type: "status", message: `saved to Supabase: ${title}` }]);
+    } catch (err) {
+      console.error('Error saving note:', err);
+      toast.error("Failed to save note");
+      setLogs((l) => [...l, { type: "error", message: "Failed to save to Supabase" }]);
+    } finally {
+      setSaving(false);
+    }
+  }
+
   async function saveToKB() {
     const name = suggestPath(query);
     const path = prompt("Save to (relative path under content/):", name);
@@ -108,6 +151,11 @@ export default function ResearchStreamPage() {
   function copyMd() {
     navigator.clipboard.writeText(markdown);
     setLogs((l) => [...l, { type: "status", message: "copied markdown" }]);
+  }
+
+  function generateTitle(q: string): string {
+    const cleaned = q.trim().slice(0, 80);
+    return cleaned || `Research - ${new Date().toLocaleDateString()}`;
   }
 
   function suggestPath(q: string) {
@@ -134,20 +182,67 @@ export default function ResearchStreamPage() {
         </div>
       </div>
 
-      <div className="grid md:grid-cols-[1fr_280px] gap-3">
-        <div className="border rounded-md p-3 min-h-[50vh]">
-          <div className="prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: html }} />
+      <div className="grid md:grid-cols-[1fr_320px] gap-4">
+        <div className="border rounded-lg p-6 min-h-[60vh] bg-background/50">
+          <ResponsiveMarkdown content={markdown} />
         </div>
-        <aside className="border rounded-md p-3 h-full min-h-[50vh]">
-          <div className="flex items-center gap-2 mb-2">
-            <button onClick={saveToKB} disabled={!markdown} className="h-8 px-2 text-xs rounded-md border hover:bg-accent/60 disabled:opacity-50">Save to KB</button>
-            <button onClick={copyMd} disabled={!markdown} className="h-8 px-2 text-xs rounded-md border hover:bg-accent/60 disabled:opacity-50">Copy MD</button>
+        <aside className="border rounded-lg p-4 h-full min-h-[60vh] bg-background/30">
+          {/* Save Controls */}
+          {markdown && (
+            <div className="mb-4 p-3 border rounded-lg bg-background/50">
+              <div className="text-sm font-medium mb-2">Save Research</div>
+              <div className="space-y-2">
+                <input
+                  type="text"
+                  placeholder="Note title..."
+                  value={noteTitle}
+                  onChange={(e) => setNoteTitle(e.target.value)}
+                  className="w-full px-2 py-1 text-xs border rounded bg-background"
+                />
+                <input
+                  type="text"
+                  placeholder="Tags (comma separated)"
+                  value={tags}
+                  onChange={(e) => setTags(e.target.value)}
+                  className="w-full px-2 py-1 text-xs border rounded bg-background"
+                />
+                <div className="flex gap-1">
+                  <button 
+                    onClick={saveToSupabase} 
+                    disabled={saving} 
+                    className="flex-1 h-7 px-2 text-xs rounded border hover:bg-accent/60 disabled:opacity-50 bg-background"
+                  >
+                    {saving ? "Saving..." : "💾 Supabase"}
+                  </button>
+                  <button 
+                    onClick={saveToKB} 
+                    disabled={!markdown} 
+                    className="flex-1 h-7 px-2 text-xs rounded border hover:bg-accent/60 disabled:opacity-50 bg-background"
+                  >
+                    📚 KB
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Action Buttons */}
+          <div className="flex items-center gap-2 mb-3">
+            <button onClick={copyMd} disabled={!markdown} className="h-8 px-3 text-xs rounded-md border hover:bg-accent/60 disabled:opacity-50 bg-background">
+              📋 Copy
+            </button>
           </div>
-          <div className="text-xs font-medium mb-1">Progress</div>
-          <div className="text-xs space-y-1 max-h-[60vh] overflow-auto">
+
+          {/* Progress Log */}
+          <div className="text-xs font-medium mb-2">Research Progress</div>
+          <div className="text-xs space-y-1 max-h-[50vh] overflow-auto">
             {logs.map((l, i) => (
-              <div key={i} className={`rounded px-2 py-1 border ${l.type === 'error' ? 'border-red-400' : 'border-border'}`}>
-                <span className="font-mono">{l.type}</span>: {l.message}
+              <div key={i} className={`rounded px-2 py-1 border text-xs ${
+                l.type === 'error' ? 'border-red-400 bg-red-50 dark:bg-red-950/30' : 
+                l.type === 'tool' ? 'border-blue-400 bg-blue-50 dark:bg-blue-950/30' :
+                'border-border bg-background/50'
+              }`}>
+                <span className="font-mono font-medium">{l.type}</span>: {l.message}
               </div>
             ))}
           </div>
