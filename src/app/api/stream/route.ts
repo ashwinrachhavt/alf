@@ -17,6 +17,6 @@ export async function POST(req: Request) {
     prompt,
   });
 
-  // AI SDK v5: use toTextStreamResponse()
-  return result.toTextStreamResponse();
+  // Use the AI SDK data stream helper so the client can parse SSE frames.
+  return result.toDataStreamResponse();
 }
