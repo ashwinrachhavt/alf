@@ -11,6 +11,7 @@ export default function Home() {
         <div className="mt-4 flex gap-2">
           <Link href="/notes" className="btn">Open Notes</Link>
           <Link href="/knowledge" className="btn">Browse Concepts</Link>
+          <Link href="/research/stream" className="btn">Streaming Research</Link>
         </div>
       </section>
       <section className="grid gap-4 md:grid-cols-2">
@@ -26,4 +27,3 @@ export default function Home() {
     </div>
   );
 }
-

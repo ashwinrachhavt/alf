@@ -8,6 +8,8 @@ export default function Nav() {
         <nav className="flex items-center gap-4 text-sm">
           <Link href="/" className="hover:underline">ALF</Link>
           <Link href="/kb" className="hover:underline">Knowledge</Link>
+          <Link href="/research" className="hover:underline">Research (Agents)</Link>
+          <Link href="/stream" className="hover:underline">Stream (AI SDK)</Link>
         </nav>
         <div className="flex items-center gap-2">
           <ThemeToggle />
