@@ -1,60 +1,131 @@
+import { getRelevantDocs } from "@/lib/knowledge";
 import OpenAI from "openai";
-import { NextResponse } from "next/server";
-import { findByTags } from "@/lib/store";
 
 export const maxDuration = 300;
+export const dynamic = "force-dynamic";
 
 const client = new OpenAI();
 
 export async function POST(req: Request) {
   try {
-    const { query, tags = [] } = await req.json();
+    const body = await req.json();
+    const { query } = body;
+    
     if (!query || typeof query !== "string") {
-      return NextResponse.json(
-        { error: "Missing or invalid 'query' string parameter." },
-        { status: 400 }
+      return new Response(
+        JSON.stringify({ error: "Missing or invalid 'query' parameter" }), 
+        { 
+          status: 400, 
+          headers: { "Content-Type": "application/json" } 
+        }
       );
     }
 
-    const prior = await findByTags(Array.isArray(tags) ? tags : [], 6);
-    const context = prior.map((n) => `# ${n.title}\n\n${n.content}`).join("\n\n---\n\n");
-    const input = context
-      ? `Context (organization notes):\n\n${context}\n\n---\n\nResearch task: ${query}`
-      : `Research task: ${query}`;
+    // Get relevant knowledge base context
+    const kb = await getRelevantDocs(query, 3);
+    const kbContext = kb
+      .map((d) => `# KB: ${d.path}\n\n${d.content.substring(0, 4000)}`)
+      .join("\n\n---\n\n");
 
-    const completion = await client.responses.create({
+    const systemPrompt = `You are a Deep Research Agent specializing in comprehensive information gathering and analysis.
+
+RESEARCH PROCESS:
+1. Plan 2-3 targeted sub-queries based on the main research task
+2. Use your knowledge to gather diverse, credible information
+3. Extract key insights, facts, and relevant details
+4. Synthesize findings into a structured report
+
+OUTPUT FORMAT:
+- **TL;DR**: 1-2 sentence summary
+- **Key Findings**: 3-5 bullet points with key insights
+- **Detailed Analysis**: 2-3 paragraph narrative with context and implications
+- **Sources**: Include any relevant sources or references you can provide
+
+QUALITY STANDARDS:
+- Provide comprehensive and accurate information
+- Structure your response clearly
+- Include factual details and context
+- Note any limitations or uncertainties`;
+
+    const userPrompt = kbContext 
+      ? `Knowledge Base Context:\n${kbContext}\n\n---\n\nResearch Task: ${query}`
+      : `Research Task: ${query}`;
+
+    const stream = await client.chat.completions.create({
       model: "gpt-4o-mini",
-      input: [
-        {
-          role: "system",
-          content:
-            "You are a deep research agent. Plan 2–3 sub‑queries, use factual reasoning, and produce a concise report with TL;DR, bullet points, narrative, and sources.",
-        },
-        { role: "user", content: input },
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt }
       ],
+      stream: true,
     });
 
-    const textOutput = (
-      completion.output_text ||
-      (Array.isArray(completion.output)
-        ? completion.output
-            .filter((o: any) => o.type === "message")
-            .map((o: any) =>
-              Array.isArray(o.content)
-                ? o.content.map((c: any) => c.text ?? "").join(" ")
-                : ""
-            )
-            .join(" ")
-        : "")
-    ).trim();
+    const encoder = new TextEncoder();
+    const ts = new TransformStream<Uint8Array, Uint8Array>();
+    const writer = ts.writable.getWriter();
 
-    return NextResponse.json({ text: textOutput });
-  } catch (err: any) {
-    console.error("Agent route error:", err);
-    return NextResponse.json(
-      { error: "Internal Server Error", details: err?.message ?? err },
-      { status: 500 }
+    (async () => {
+      try {
+        // Send initial status
+        await writer.write(
+          encoder.encode(`event: status\ndata: ${JSON.stringify({ message: "Research started", timestamp: new Date().toISOString() })}\n\n`)
+        );
+
+        for await (const chunk of stream) {
+          const delta = chunk.choices?.[0]?.delta?.content || "";
+          if (delta) {
+            await writer.write(
+              encoder.encode(`event: text\ndata: ${JSON.stringify({ delta })}\n\n`)
+            );
+          }
+        }
+
+        // Send completion event
+        await writer.write(
+          encoder.encode(`event: done\ndata: ${JSON.stringify({ 
+            message: "Research completed successfully",
+            timestamp: new Date().toISOString()
+          })}\n\n`)
+        );
+
+      } catch (streamError) {
+        console.error("Stream processing error:", streamError);
+        await writer.write(
+          encoder.encode(`event: error\ndata: ${JSON.stringify({ 
+            message: `Stream error: ${String(streamError)}`,
+            timestamp: new Date().toISOString()
+          })}\n\n`)
+        );
+      } finally {
+        try {
+          await writer.close();
+        } catch (closeError) {
+          console.error("Error closing writer:", closeError);
+        }
+      }
+    })();
+
+    return new Response(ts.readable, {
+      headers: {
+        "Content-Type": "text/event-stream; charset=utf-8",
+        "Cache-Control": "no-cache, no-transform",
+        "Connection": "keep-alive",
+        "X-Accel-Buffering": "no",
+      },
+    });
+
+  } catch (error) {
+    console.error("Research endpoint error:", error);
+    return new Response(
+      JSON.stringify({ 
+        error: "Internal server error", 
+        details: String(error),
+        timestamp: new Date().toISOString()
+      }), 
+      { 
+        status: 500, 
+        headers: { "Content-Type": "application/json" } 
+      }
     );
   }
 }
-
