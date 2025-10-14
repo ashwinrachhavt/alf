@@ -105,26 +105,42 @@ Output format:
           },
         },
         scrapeMany: {
-          description: "Scrape multiple URLs via Firecrawl. Returns [{url,title,text}] with truncated text per doc.",
-          inputSchema: z.object({ urls: z.array(z.string().url()), maxChars: z.number().int().min(500).max(12000).default(4000) }),
-          execute: async ({ urls, maxChars }) => {
+          description: "Scrape multiple URLs via Firecrawl. Returns [{url,title,text,quotes?}] with truncated text per doc.",
+          inputSchema: z.object({
+            urls: z.array(z.string().url()),
+            maxChars: z.number().int().min(500).max(12000).default(4000),
+            extractQuotes: z.boolean().optional().default(true),
+          }),
+          execute: async ({ urls, maxChars, extractQuotes }) => {
             const results: any[] = [];
-            const jobs = urls.map(async (u: string) => {
-              const r = await withRetry(() => firecrawl.scrape(u));
-              if (!r?.success) {
-                results.push({ url: u, title: "", text: "" });
-                return;
+            await Promise.allSettled(
+              urls.map(async (u: string) => {
+                const r = await withRetry(() => firecrawl.scrape(u));
+                if (!r?.success) return results.push({ url: u, title: "", text: "" });
+                const d: any = r.data;
+                const title = d?.title || d?.metadata?.title || "";
+                let text = typeof d === "string" ? d : (d?.markdown || d?.content || d?.text || d?.article?.content || d?.raw || JSON.stringify(d));
+                if (typeof text !== "string") text = JSON.stringify(text);
+                results.push({ url: u, title, text: text.slice(0, maxChars) });
+              })
+            );
+
+            // Optional per-doc quote extraction (limit to first 5 docs)
+            if (extractQuotes) {
+              const subset = results.slice(0, 5);
+              for (const doc of subset) {
+                if (!doc.text || doc.text.length < 400) continue;
+                try {
+                  const qPrompt = `From the following article text, extract up to 2 short direct quotes (verbatim) that support key claims relevant to the research query. Return strict JSON like:\n{ "quotes": [ { "quote": string, "claim": string } ] }\n\nText:\n${doc.text}`;
+                  const out = await generateText({ model: openai(env.RESEARCH_MODEL), prompt: qPrompt, temperature: 0 });
+                  const parsed = JSON.parse(out.text.trim());
+                  if (parsed?.quotes && Array.isArray(parsed.quotes)) {
+                    doc.quotes = parsed.quotes.slice(0, 2);
+                  }
+                } catch {}
               }
-              const d: any = r.data;
-              let title = d?.title || d?.metadata?.title || "";
-              let text = "";
-              if (typeof d === "string") text = d;
-              else text = d?.markdown || d?.content || d?.text || d?.article?.content || d?.raw || JSON.stringify(d);
-              if (typeof text !== "string") text = JSON.stringify(text);
-              text = text.slice(0, maxChars);
-              results.push({ url: u, title, text });
-            });
-            await Promise.allSettled(jobs);
+            }
+
             return JSON.stringify({ docs: results });
           },
         },
