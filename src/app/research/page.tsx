@@ -1,10 +1,16 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { markdownToHtml } from "@/lib/markdown";
 import ResponsiveMarkdown from "@/components/ResponsiveMarkdown";
 import { useRouter } from "next/navigation";
-import { MessageSquare } from "lucide-react";
+import { MessageSquare, Copy, Save, Search as SearchIcon } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 
 export default function ResearchStreamPage() {
   const router = useRouter();
@@ -16,9 +22,25 @@ export default function ResearchStreamPage() {
   const [logs, setLogs] = useState<{ type: string; message: string }[]>([]);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [fcUrl, setFcUrl] = useState<string>("");
+  const [fcStatus, setFcStatus] = useState<'unknown' | 'online' | 'offline'>('unknown');
+  const [sources, setSources] = useState<{ url: string; title?: string; text?: string }[]>([]);
   const abortRef = useRef<AbortController | null>(null);
 
   const html = useMemo(() => markdownToHtml(markdown), [markdown]);
+
+  useEffect(() => {
+    let ignore = false;
+    (async () => {
+      try {
+        const r = await fetch('/api/tools/firecrawl/health').then((x) => x.json());
+        if (!ignore) setFcStatus(r?.success ? 'online' : 'offline');
+      } catch {
+        if (!ignore) setFcStatus('offline');
+      }
+    })();
+    return () => { ignore = true; };
+  }, []);
 
   async function start() {
     if (running) return;
@@ -69,6 +91,20 @@ export default function ResearchStreamPage() {
                 ? `tool:${obj.name} args:${obj.args ?? ''}`
                 : `tool:${obj.name} output:${obj.output ?? ''}`;
               setLogs((l) => [...l, { type: "tool", message: msg.slice(0, 200) }]);
+
+              // Capture sources from scrapeMany output when available
+              const name = obj.name || obj.tool || "";
+              const output = obj.output || obj.result || obj.data;
+              if (name === 'scrapeMany' && output) {
+                try {
+                  const out = typeof output === 'string' ? JSON.parse(output) : output;
+                  const docs = Array.isArray(out?.docs) ? out.docs : [];
+                  if (docs.length) {
+                    const mapped = docs.map((d: any) => ({ url: d.url, title: d.title, text: d.text }));
+                    setSources(mapped);
+                  }
+                } catch {}
+              }
             } catch {}
           }
           if (type === "status" && data) {
@@ -105,7 +141,7 @@ export default function ResearchStreamPage() {
     setLogs((l) => [...l, { type: "status", message: "copied markdown" }]);
   }
 
-  async function saveToDB() {
+  async function saveAsNote() {
     if (!markdown) return;
     setSaving(true);
     setSaved(false);
@@ -115,127 +151,298 @@ export default function ResearchStreamPage() {
       const titleMatch = markdown.match(/^#\s+(.+)$/m);
       if (titleMatch?.[1]) title = titleMatch[1].slice(0, 100);
 
-      // 1) Create a thread
-      const t = await fetch('/api/threads', {
+      // Create a Note with markdown content
+      const res = await fetch('/api/notes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: `Research: ${title}` }),
+        body: JSON.stringify({
+          title,
+          contentMd: markdown,
+          tags: ['research'],
+          category: 'Research',
+          sourceType: 'research',
+          sourceId: null,
+        }),
       }).then((r) => r.json());
-      const threadId = t?.data?.id;
-      if (!threadId) throw new Error('Failed to create thread');
-
-      // 2) Save a run under the thread (Markdown + basic Doc)
-      const doc = { type: 'doc', content: [{ type: 'paragraph', content: [{ type: 'text', text: markdown }] }] };
-      const saved = await fetch(`/api/threads/${threadId}/runs`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, contentMd: markdown, contentDoc: doc }),
-      }).then((r) => r.json());
-      if (!saved?.data?.id) throw new Error('Failed to save run');
+      const noteId = res?.data?.id;
+      if (!noteId) throw new Error('Failed to create note');
 
       setSaved(true);
-      setLogs((l) => [...l, { type: 'status', message: `saved to thread ${threadId}` }]);
-      setTimeout(() => router.push(`/threads/${threadId}`), 800);
+      setLogs((l) => [...l, { type: 'status', message: `saved to note ${noteId}` }]);
+      setTimeout(() => router.push(`/notes/${noteId}`), 800);
     } catch (e) {
-      setLogs((l) => [...l, { type: 'error', message: 'failed to save to DB' }]);
+      setLogs((l) => [...l, { type: 'error', message: 'failed to save note' }]);
     } finally {
       setSaving(false);
     }
   }
 
+  async function firecrawlSearch() {
+    try {
+      setLogs((l) => [...l, { type: "status", message: "Firecrawl: searching index…" }]);
+      const res = await fetch("/api/tools/firecrawl/search", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query }),
+      }).then((r) => r.json());
+      if (!res?.success) throw new Error(res?.error || "search failed");
+      const data = res.data;
+      let items: any[] = [];
+      if (Array.isArray(data)) items = data;
+      else if (Array.isArray(data?.results)) items = data.results;
+      const top = items.slice(0, 3).map((x: any) => `- ${x.title || x.name || 'result'} ${x.url ? `(${x.url})` : ''}`).join("\n");
+      setLogs((l) => [...l, { type: "tool", message: top || "No results" }]);
+    } catch (e: any) {
+      setLogs((l) => [...l, { type: "error", message: e?.message || "search error" }]);
+    }
+  }
+
+  async function firecrawlScrape() {
+    if (!fcUrl.trim()) return;
+    try {
+      setLogs((l) => [...l, { type: "status", message: `Firecrawl: scraping ${fcUrl}` }]);
+      const res = await fetch("/api/tools/firecrawl/scrape", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: fcUrl }),
+      }).then((r) => r.json());
+      if (!res?.success) throw new Error(res?.error || "scrape failed");
+      const json = typeof res.data === 'string' ? res.data : JSON.stringify(res.data, null, 2);
+      setMarkdown((m) => `${m}\n\n## Firecrawl Scrape\nURL: ${fcUrl}\n\n\`\`\`json\n${json.slice(0, 4000)}\n\`\`\``);
+      setLogs((l) => [...l, { type: "tool", message: `scraped ${fcUrl}` }]);
+    } catch (e: any) {
+      setLogs((l) => [...l, { type: "error", message: e?.message || "scrape error" }]);
+    }
+  }
+
+  async function firecrawlExtract() {
+    if (!fcUrl.trim()) return;
+    try {
+      setLogs((l) => [...l, { type: "status", message: `Firecrawl: extracting ${fcUrl}` }]);
+      const res = await fetch("/api/tools/firecrawl/extract", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: fcUrl }),
+      }).then((r) => r.json());
+      if (!res?.success) throw new Error(res?.error || "extract failed");
+      const json = typeof res.data === 'string' ? res.data : JSON.stringify(res.data, null, 2);
+      setMarkdown((m) => `${m}\n\n## Firecrawl Extract\nURL: ${fcUrl}\n\n\`\`\`json\n${json.slice(0, 4000)}\n\`\`\``);
+      setLogs((l) => [...l, { type: "tool", message: `extracted ${fcUrl}` }]);
+    } catch (e: any) {
+      setLogs((l) => [...l, { type: "error", message: e?.message || "extract error" }]);
+    }
+  }
+
+  async function firecrawlCrawlWait() {
+    if (!fcUrl.trim()) return;
+    try {
+      setLogs((l) => [...l, { type: "status", message: `Firecrawl: crawl+wait ${fcUrl}` }]);
+      const res = await fetch("/api/tools/firecrawl/crawl/wait", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: fcUrl, pollMs: 1500, maxRetries: 60 }),
+      }).then((r) => r.json());
+      if (!res?.success) throw new Error(res?.error || "crawl failed");
+      const json = typeof res.data === 'string' ? res.data : JSON.stringify(res.data, null, 2);
+      setMarkdown((m) => `${m}\n\n## Firecrawl Crawl (completed)\nURL: ${fcUrl}\n\n\`\`\`json\n${json.slice(0, 4000)}\n\`\`\``);
+      setLogs((l) => [...l, { type: "tool", message: `crawled ${fcUrl}` }]);
+    } catch (e: any) {
+      setLogs((l) => [...l, { type: "error", message: e?.message || "crawl error" }]);
+    }
+  }
+
   return (
-    <div className="mx-auto max-w-6xl px-4 py-6 space-y-6">
-      <div className="mb-8">
+    <div className="mx-auto max-w-7xl px-4 py-6 space-y-6">
+      {/* Header */}
+      <div>
         <h1 className="text-3xl font-bold mb-2 text-neutral-900 dark:text-neutral-100">Deep Research</h1>
         <p className="text-neutral-600 dark:text-neutral-400">
           AI-powered research with live streaming results
         </p>
       </div>
 
-      <div className="border border-neutral-200/60 dark:border-neutral-800/60 rounded-xl p-6 bg-white dark:bg-neutral-900 shadow-sm">
-        <label className="text-sm font-medium text-neutral-900 dark:text-neutral-100 mb-2 block">Research Query</label>
-        <textarea
-          className="w-full font-mono text-sm border border-neutral-200 dark:border-neutral-800 rounded-lg p-3 min-h-32 bg-white dark:bg-neutral-950 text-neutral-900 dark:text-neutral-100 focus:outline-none focus:ring-2 focus:ring-neutral-900 dark:focus:ring-neutral-100"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Enter your research question..."
-        />
-        <div className="flex items-center gap-2 mt-3">
-          <button
-            onClick={start}
-            disabled={running}
-            className="flex items-center gap-2 px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90 transition-opacity"
-          >
-            {running ? (
-              <>
-                <div className="w-4 h-4 border-2 border-white dark:border-black border-t-transparent rounded-full animate-spin" />
-                Researching...
-              </>
-            ) : (
-              <>
-                🔎 Start Research
-              </>
-            )}
-          </button>
-          <button
-            onClick={stop}
-            disabled={!running}
-            className="px-4 py-2 border border-neutral-300 dark:border-neutral-700 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
-          >
-            Stop
-          </button>
-        </div>
-      </div>
-
-      <div className="grid md:grid-cols-[1fr_320px] gap-4">
-        <div className="border border-neutral-200/60 dark:border-neutral-800/60 rounded-xl p-6 min-h-[60vh] bg-white dark:bg-neutral-900 shadow-sm">
-          {markdown ? (
-            <ResponsiveMarkdown content={markdown} />
-          ) : (
-            <div className="flex items-center justify-center h-full text-neutral-500 dark:text-neutral-400">
-              <div className="text-center">
-                <MessageSquare className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                <p className="text-sm">Research results will appear here</p>
-              </div>
-            </div>
-          )}
-        </div>
-        <aside className="border border-neutral-200/60 dark:border-neutral-800/60 rounded-xl p-4 h-full min-h-[60vh] bg-white dark:bg-neutral-900 shadow-sm">
-          {/* Actions */}
-          <div className="flex flex-col gap-2 mb-4">
-            <button
-              onClick={copyMd}
-              disabled={!markdown}
-              className="flex items-center gap-2 px-3 py-2 text-sm rounded-lg border border-neutral-300 dark:border-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-neutral-900 dark:text-neutral-100"
+      {/* Query Input */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Research Query</CardTitle>
+          <CardDescription>Enter your research question or topic</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Textarea
+            className="font-mono min-h-32"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Enter your research question..."
+          />
+          <div className="flex flex-col sm:flex-row items-center gap-2 mt-4">
+            <Button
+              onClick={start}
+              disabled={running}
+              variant="primary"
+              className="flex-1 sm:flex-initial"
             >
-              📋 Copy Markdown
-            </button>
-            <button onClick={saveToDB} disabled={!markdown || saving || saved} className="flex items-center gap-2 px-3 py-2 text-sm rounded-lg bg-black dark:bg-white text-white dark:text-black hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity">
-              {saving ? 'Saving…' : saved ? 'Saved!' : 'Save to DB'}
-            </button>
+              {running ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white dark:border-black border-t-transparent rounded-full animate-spin mr-2" />
+                  Researching...
+                </>
+              ) : (
+                <>
+                  <SearchIcon className="w-4 h-4 mr-2" />
+                  Start Research
+                </>
+              )}
+            </Button>
+            <Button
+              onClick={stop}
+              disabled={!running}
+              variant="secondary"
+            >
+              Stop
+            </Button>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Results & Sidebar */}
+      <div className="grid lg:grid-cols-[1fr_340px] gap-6">
+        {/* Results */}
+        <Card className="min-h-[60vh]">
+          <CardContent className="pt-6">
+            {markdown ? (
+              <ResponsiveMarkdown content={markdown} />
+            ) : (
+              <div className="flex items-center justify-center h-[50vh] text-neutral-500 dark:text-neutral-400">
+                <div className="text-center">
+                  <MessageSquare className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                  <p className="text-sm">Research results will appear here</p>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Sidebar */}
+        <aside className="space-y-4">
+          {/* Actions */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm">Actions</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <Button
+                onClick={copyMd}
+                disabled={!markdown}
+                variant="secondary"
+                size="sm"
+                className="w-full justify-start"
+              >
+                <Copy className="w-4 h-4 mr-2" />
+                Copy Markdown
+              </Button>
+              <Button
+                onClick={saveAsNote}
+                disabled={!markdown || saving || saved}
+                variant="primary"
+                size="sm"
+                className="w-full justify-start"
+              >
+                <Save className="w-4 h-4 mr-2" />
+                {saving ? 'Saving...' : saved ? 'Saved!' : 'Save as Note'}
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Sources (from scrapeMany) */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm">Sources</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2 max-h-[30vh] overflow-auto">
+              {sources.length === 0 ? (
+                <p className="text-xs text-neutral-500">No sources captured yet</p>
+              ) : (
+                <ul className="space-y-2 text-sm">
+                  {sources.map((s, i) => (
+                    <li key={s.url + i} className="truncate">
+                      <span className="text-xs text-neutral-500 mr-1">[{i + 1}]</span>
+                      <a href={s.url} target="_blank" rel="noreferrer" className="underline">
+                        {s.title || s.url}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Firecrawl */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-sm">Firecrawl</CardTitle>
+                <Badge variant={fcStatus === 'online' ? 'success' : fcStatus === 'offline' ? 'error' : 'default'}>
+                  {fcStatus}
+                </Badge>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div>
+                <label className="block text-xs mb-1 text-neutral-600 dark:text-neutral-400">Target URL</label>
+                <Input
+                  value={fcUrl}
+                  onChange={(e) => setFcUrl(e.target.value)}
+                  placeholder="https://example.com/article"
+                  className="h-9"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <Button onClick={firecrawlScrape} disabled={!fcUrl} variant="secondary" size="sm">
+                  Scrape
+                </Button>
+                <Button onClick={firecrawlExtract} disabled={!fcUrl} variant="secondary" size="sm">
+                  Extract
+                </Button>
+                <Button onClick={firecrawlCrawlWait} disabled={!fcUrl} variant="secondary" size="sm">
+                  Crawl
+                </Button>
+                <Button onClick={firecrawlSearch} disabled={!query.trim()} variant="primary" size="sm">
+                  Search
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
 
           {/* Progress Log */}
-          <div className="text-sm font-semibold mb-3 text-neutral-900 dark:text-neutral-100">Research Progress</div>
-          <div className="space-y-2 max-h-[50vh] overflow-auto">
-            {logs.length === 0 ? (
-              <div className="text-xs text-neutral-500 dark:text-neutral-400 p-2">
-                No activity yet
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm">Research Progress</CardTitle>
+            </CardHeader>
+            <CardContent className="max-h-[40vh] overflow-auto">
+              <div className="space-y-2">
+                {logs.length === 0 ? (
+                  <p className="text-xs text-neutral-500 dark:text-neutral-400 text-center py-4">
+                    No activity yet
+                  </p>
+                ) : (
+                  logs.map((l, i) => (
+                    <div
+                      key={i}
+                      className={`rounded-lg px-3 py-2 border text-xs ${
+                        l.type === 'error'
+                          ? 'border-red-300 dark:border-red-800 bg-red-50 dark:bg-red-950/30 text-red-900 dark:text-red-200'
+                          : l.type === 'tool'
+                          ? 'border-blue-300 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/30 text-blue-900 dark:text-blue-200'
+                          : 'border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-950/30 text-neutral-900 dark:text-neutral-100'
+                      }`}
+                    >
+                      <span className="font-mono font-semibold">{l.type}</span>: {l.message}
+                    </div>
+                  ))
+                )}
               </div>
-            ) : (
-              logs.map((l, i) => (
-                <div key={i} className={`rounded-lg px-3 py-2 border text-xs ${
-                  l.type === 'error'
-                    ? 'border-red-300 dark:border-red-800 bg-red-50 dark:bg-red-950/30 text-red-900 dark:text-red-200'
-                    : l.type === 'tool'
-                    ? 'border-blue-300 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/30 text-blue-900 dark:text-blue-200'
-                    : 'border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-950/30 text-neutral-900 dark:text-neutral-100'
-                }`}>
-                  <span className="font-mono font-semibold">{l.type}</span>: {l.message}
-                </div>
-              ))
-            )}
-          </div>
+            </CardContent>
+          </Card>
         </aside>
       </div>
     </div>

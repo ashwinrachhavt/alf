@@ -57,13 +57,9 @@ export default function ResponsiveMarkdown({ content, className = "" }: Responsi
             <pre className="p-4 bg-foreground/5 border border-foreground/10 rounded-lg overflow-x-auto mb-4 text-sm">{children}</pre>
           ),
           blockquote: ({ children }) => (
-            <motion.blockquote 
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="border-l-4 border-foreground/30 pl-4 py-2 my-4 italic text-foreground/80 bg-foreground/5 rounded-r"
-            >
+            <blockquote className="border-l-4 border-foreground/30 pl-4 py-2 my-4 italic text-foreground/80 bg-foreground/5 rounded-r">
               {children}
-            </motion.blockquote>
+            </blockquote>
           ),
           table: ({ children }) => (
             <div className="overflow-x-auto mb-4">

@@ -3,11 +3,12 @@ import { prisma } from '@/lib/prisma';
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  ctx: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await ctx.params;
     const note = await prisma.note.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         linkedNotes: {
           include: {
@@ -41,9 +42,10 @@ export async function GET(
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  ctx: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await ctx.params;
     const body = await request.json();
     const {
       title,
@@ -69,7 +71,7 @@ export async function PATCH(
     if (isArchived !== undefined) updateData.isArchived = isArchived;
 
     const note = await prisma.note.update({
-      where: { id: params.id },
+      where: { id },
       data: updateData,
     });
 
@@ -87,11 +89,12 @@ export async function PATCH(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  ctx: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await ctx.params;
     await prisma.note.delete({
-      where: { id: params.id },
+      where: { id },
     });
 
     return NextResponse.json({ success: true });
