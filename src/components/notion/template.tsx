@@ -2,11 +2,12 @@
 
 import { ReactNode } from "react";
 import { motion } from "framer-motion";
-import Link from "next/link";
 
 import { cn } from "@/lib/utils";
 
-const fade: Parameters<typeof motion.div>[0]["transition"] = {
+type MotionProps = Parameters<typeof motion.div>[0];
+
+const entrance: MotionProps["transition"] = {
   duration: 0.45,
   ease: [0.16, 1, 0.3, 1],
 };
@@ -19,57 +20,58 @@ export function NotionTemplate({
   className?: string;
 }) {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 24 }}
+    <motion.article
+      initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={fade}
+      transition={entrance}
       className={cn(
-        "relative isolate overflow-hidden rounded-3xl border border-neutral-200/80 bg-white/95 shadow-subtle backdrop-blur-sm dark:border-neutral-800/70 dark:bg-neutral-950/70",
+        "relative isolate overflow-hidden rounded-[28px] border border-neutral-200/70 bg-neutral-50/80 p-8 shadow-[0_24px_60px_rgba(15,15,15,0.08)] backdrop-blur-sm dark:border-neutral-800/60 dark:bg-neutral-950/70 dark:shadow-[0_32px_80px_rgba(0,0,0,0.45)] md:p-12",
         className,
       )}
     >
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(12,12,12,0.04),_transparent_60%)] dark:bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.04),_transparent_60%)]" />
-      <div className="relative">
-        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-neutral-200 to-transparent dark:via-neutral-800" />
-        <div className="absolute inset-y-8 left-12 w-px bg-neutral-200/60 dark:bg-neutral-800/60" />
-        <div className="absolute inset-y-14 right-12 w-px bg-neutral-200/60 dark:bg-neutral-800/60" />
-        <div className="relative p-8 md:p-12">{children}</div>
-      </div>
-    </motion.div>
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(17,17,17,0.08),_transparent_55%)] dark:bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.06),_transparent_55%)]" />
+      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-neutral-300/70 to-transparent dark:via-neutral-700" />
+      <div className="absolute inset-y-10 left-12 w-px bg-neutral-200/60 dark:bg-neutral-800/60" />
+      <div className="absolute inset-y-16 right-12 w-px bg-neutral-200/60 dark:bg-neutral-800/60" />
+      <div className="relative space-y-12 md:space-y-16">{children}</div>
+    </motion.article>
   );
 }
 
 type NotionTemplateHeaderProps = {
+  kicker?: string;
   title: string;
   description?: string;
-  kicker?: string;
   meta?: ReactNode;
   actions?: ReactNode;
   className?: string;
 };
 
 export function NotionTemplateHeader({
+  kicker,
   title,
   description,
-  kicker,
   meta,
   actions,
   className,
 }: NotionTemplateHeaderProps) {
   return (
     <motion.header
-      initial={{ opacity: 0, y: 12 }}
+      initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={fade}
-      className={cn("flex flex-col gap-6 md:flex-row md:items-end md:justify-between", className)}
+      transition={entrance}
+      className={cn(
+        "flex flex-col gap-8 md:flex-row md:items-end md:justify-between",
+        className,
+      )}
     >
-      <div className="space-y-3">
+      <div className="space-y-4">
         {kicker ? (
           <p className="text-[11px] uppercase tracking-[0.4em] text-neutral-500 dark:text-neutral-400">
             {kicker}
           </p>
         ) : null}
-        <div className="space-y-2">
+        <div className="space-y-3">
           <h1 className="text-3xl font-medium tracking-tight text-neutral-900 dark:text-neutral-50 md:text-4xl">
             {title}
           </h1>
@@ -79,47 +81,78 @@ export function NotionTemplateHeader({
             </p>
           ) : null}
         </div>
-        {meta ? <div className="text-xs text-neutral-500 dark:text-neutral-400">{meta}</div> : null}
+        {meta ? (
+          <div className="text-xs text-neutral-500 dark:text-neutral-500/80">{meta}</div>
+        ) : null}
       </div>
-      {actions ? <div className="flex items-center gap-2 md:gap-3">{actions}</div> : null}
+      {actions ? (
+        <div className="flex flex-wrap items-center gap-2 md:gap-3">{actions}</div>
+      ) : null}
     </motion.header>
   );
 }
 
-type NotionTemplateSectionProps = {
-  title?: string;
-  description?: string;
-  kicker?: string;
+type NotionTemplateToolbarProps = {
   children: ReactNode;
-  aside?: ReactNode;
   className?: string;
-  bleed?: "none" | "full";
 };
 
-export function NotionTemplateSection({
-  title,
-  description,
-  kicker,
+export function NotionTemplateToolbar({
   children,
-  aside,
   className,
-  bleed = "none",
-}: NotionTemplateSectionProps) {
+}: NotionTemplateToolbarProps) {
   return (
-    <motion.section
-      initial={{ opacity: 0, y: 18 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-64px" }}
-      transition={fade}
+    <div
       className={cn(
-        "grid gap-8 md:grid-cols-[minmax(0,_240px)_1fr] md:gap-12",
-        bleed === "full" && "md:mx-[-1.5rem] md:px-6",
+        "flex flex-wrap items-center gap-3 text-[11px] uppercase tracking-[0.3em] text-neutral-400 dark:text-neutral-500",
         className,
       )}
     >
-      <div className="space-y-3">
+      {children}
+    </div>
+  );
+}
+
+type NotionTemplateSectionProps = {
+  kicker?: string;
+  title?: string;
+  description?: string;
+  aside?: ReactNode;
+  children: ReactNode;
+  layout?: "single" | "split";
+  className?: string;
+};
+
+export function NotionTemplateSection({
+  kicker,
+  title,
+  description,
+  aside,
+  children,
+  layout = "split",
+  className,
+}: NotionTemplateSectionProps) {
+  const isSplit = layout === "split";
+
+  return (
+    <motion.section
+      initial={{ opacity: 0, y: 16 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.4, margin: "-64px" }}
+      transition={entrance}
+      className={cn(
+        "grid gap-8 md:gap-12",
+        isSplit
+          ? "md:grid-cols-[minmax(0,_260px)_minmax(0,_1fr)]"
+          : "md:grid-cols-[minmax(0,_1fr)]",
+        className,
+      )}
+    >
+      <div className={cn("space-y-4", !isSplit && "max-w-2xl")}>
         {kicker ? (
-          <p className="text-[11px] uppercase tracking-[0.4em] text-neutral-500 dark:text-neutral-400">{kicker}</p>
+          <p className="text-[11px] uppercase tracking-[0.35em] text-neutral-500 dark:text-neutral-400">
+            {kicker}
+          </p>
         ) : null}
         {title ? (
           <h2 className="text-lg font-medium tracking-tight text-neutral-900 dark:text-neutral-100 md:text-xl">
@@ -131,28 +164,39 @@ export function NotionTemplateSection({
             {description}
           </p>
         ) : null}
-        {aside ? <div className="space-y-3 text-xs text-neutral-500 dark:text-neutral-400">{aside}</div> : null}
+        {isSplit && aside ? (
+          <div className="space-y-3 text-xs text-neutral-500 dark:text-neutral-400">
+            {aside}
+          </div>
+        ) : null}
       </div>
-      <div className="space-y-6">{children}</div>
+      <div className="space-y-6">
+        {children}
+        {!isSplit && aside ? (
+          <div className="space-y-3 text-xs text-neutral-500 dark:text-neutral-400">
+            {aside}
+          </div>
+        ) : null}
+      </div>
     </motion.section>
   );
 }
 
 type NotionTemplateGridProps = {
-  children: ReactNode;
   columns?: 1 | 2 | 3;
   className?: string;
+  children: ReactNode;
 };
 
 export function NotionTemplateGrid({
-  children,
   columns = 2,
   className,
+  children,
 }: NotionTemplateGridProps) {
   return (
     <div
       className={cn(
-        "grid gap-4",
+        "grid gap-4 md:gap-6",
         columns === 1 && "md:grid-cols-1",
         columns === 2 && "md:grid-cols-2",
         columns === 3 && "md:grid-cols-3",
@@ -166,66 +210,103 @@ export function NotionTemplateGrid({
 
 type NotionTemplateCardProps = {
   title: string;
-  description?: string;
-  eyebrow?: string;
+  description: string;
   icon?: ReactNode;
-  children?: ReactNode;
+  eyebrow?: string;
+  meta?: ReactNode;
   actions?: ReactNode;
-  href?: string;
   className?: string;
 };
 
 export function NotionTemplateCard({
   title,
   description,
-  eyebrow,
   icon,
-  children,
+  eyebrow,
+  meta,
   actions,
-  href,
   className,
 }: NotionTemplateCardProps) {
-  const content = (
+  return (
     <motion.article
-      whileHover={{ y: -4, translateZ: 0 }}
-      transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+      initial={{ opacity: 0, y: 12 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-64px" }}
+      transition={entrance}
+      whileHover={{ y: -6, transition: { duration: 0.3, ease: [0.22, 1, 0.36, 1] } }}
       className={cn(
-        "group relative flex h-full flex-col gap-4 rounded-xl border border-neutral-200/80 bg-white/80 p-5 text-left shadow-subtle transition dark:border-neutral-800/70 dark:bg-neutral-950/80",
+        "group flex h-full flex-col gap-4 rounded-2xl border border-neutral-200/70 bg-white/90 p-5 shadow-[0_12px_30px_rgba(15,15,15,0.05)] transition-colors dark:border-neutral-800/60 dark:bg-neutral-900/70 dark:shadow-[0_18px_40px_rgba(0,0,0,0.35)]",
         className,
       )}
     >
-      <div className="flex items-start gap-3">
-        {icon ? (
-          <div className="flex h-9 w-9 items-center justify-center rounded-full border border-neutral-200/70 bg-white text-sm font-medium text-neutral-900 transition group-hover:border-neutral-900/40 dark:border-neutral-800/70 dark:bg-neutral-950 dark:text-neutral-100">
-            {icon}
-          </div>
-        ) : null}
-        <div className="space-y-1">
+      <div className="flex items-start justify-between gap-4">
+        <div className="space-y-2">
           {eyebrow ? (
-            <span className="text-[11px] uppercase tracking-[0.3em] text-neutral-400 dark:text-neutral-500">
+            <p className="text-[11px] uppercase tracking-[0.3em] text-neutral-400 dark:text-neutral-500">
               {eyebrow}
-            </span>
+            </p>
           ) : null}
-          <h3 className="text-base font-medium text-neutral-900 dark:text-neutral-100">{title}</h3>
-          {description ? (
-            <p className="text-sm text-neutral-600 dark:text-neutral-400">{description}</p>
-          ) : null}
+          <div className="flex items-center gap-3">
+            {icon ? <div className="text-lg text-neutral-900 dark:text-neutral-100">{icon}</div> : null}
+            <h3 className="text-base font-medium tracking-tight text-neutral-900 dark:text-neutral-100">
+              {title}
+            </h3>
+          </div>
         </div>
+        {meta ? <div className="text-xs text-neutral-400 dark:text-neutral-500">{meta}</div> : null}
       </div>
-      {children ? <div className="text-sm text-neutral-600 dark:text-neutral-400">{children}</div> : null}
-      {actions ? <div className="mt-auto pt-2 text-sm text-neutral-500 dark:text-neutral-400">{actions}</div> : null}
+      <p className="text-sm leading-relaxed text-neutral-600 transition-colors group-hover:text-neutral-800 dark:text-neutral-400 dark:group-hover:text-neutral-200">
+        {description}
+      </p>
+      {actions ? (
+        <div className="mt-auto text-xs text-neutral-500 transition-colors group-hover:text-neutral-800 dark:text-neutral-400 dark:group-hover:text-neutral-200">
+          {actions}
+        </div>
+      ) : null}
     </motion.article>
   );
+}
 
-  if (href) {
-    return (
-      <Link href={href} className="block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 dark:focus-visible:ring-neutral-100">
-        {content}
-      </Link>
-    );
-  }
+type NotionTemplateListItem = {
+  title: string;
+  description: string;
+  meta?: string;
+};
 
-  return content;
+type NotionTemplateListProps = {
+  items: NotionTemplateListItem[];
+  className?: string;
+};
+
+export function NotionTemplateList({ items, className }: NotionTemplateListProps) {
+  return (
+    <ul className={cn("space-y-4", className)}>
+      {items.map((item) => (
+        <motion.li
+          key={item.title}
+          initial={{ opacity: 0, y: 10 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-72px" }}
+          transition={entrance}
+          className="rounded-2xl border border-neutral-200/60 bg-neutral-50/60 p-5 dark:border-neutral-800/60 dark:bg-neutral-900/60"
+        >
+          <div className="flex items-start justify-between gap-4">
+            <h4 className="text-sm font-medium tracking-tight text-neutral-900 dark:text-neutral-100">
+              {item.title}
+            </h4>
+            {item.meta ? (
+              <span className="text-[11px] uppercase tracking-[0.3em] text-neutral-400 dark:text-neutral-500">
+                {item.meta}
+              </span>
+            ) : null}
+          </div>
+          <p className="mt-2 text-sm leading-relaxed text-neutral-600 dark:text-neutral-400">
+            {item.description}
+          </p>
+        </motion.li>
+      ))}
+    </ul>
+  );
 }
 
 type NotionTemplateDividerProps = {
@@ -233,15 +314,15 @@ type NotionTemplateDividerProps = {
   className?: string;
 };
 
-export function NotionTemplateDivider({
-  label,
-  className,
-}: NotionTemplateDividerProps) {
+export function NotionTemplateDivider({ label, className }: NotionTemplateDividerProps) {
   return (
-    <div className={cn("relative flex items-center gap-3 py-6 text-xs uppercase tracking-[0.3em]", className)}>
-      <div className="h-px flex-1 bg-neutral-200/80 dark:bg-neutral-800/80" />
-      {label ? <span className="text-neutral-400 dark:text-neutral-500">{label}</span> : null}
-      <div className="h-px flex-1 bg-neutral-200/80 dark:bg-neutral-800/80" />
+    <div className={cn("relative flex items-center justify-center", className)}>
+      <div className="h-px w-full bg-neutral-200/80 dark:bg-neutral-800/80" />
+      {label ? (
+        <span className="absolute bg-neutral-50 px-3 text-[11px] uppercase tracking-[0.35em] text-neutral-400 dark:bg-neutral-950 dark:text-neutral-500">
+          {label}
+        </span>
+      ) : null}
     </div>
   );
 }
@@ -254,11 +335,11 @@ type NotionTemplatePillProps = {
 export function NotionTemplatePill({ children, className }: NotionTemplatePillProps) {
   return (
     <motion.span
-      initial={{ opacity: 0, y: 4 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={fade}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.4, delay: 0.1 }}
       className={cn(
-        "inline-flex items-center gap-2 rounded-full border border-neutral-200/80 bg-white px-3 py-1 text-[11px] font-medium uppercase tracking-[0.28em] text-neutral-500 shadow-subtle dark:border-neutral-800/70 dark:bg-neutral-950",
+        "rounded-full border border-neutral-200/80 px-3 py-1 text-[10px] font-medium uppercase tracking-[0.35em] text-neutral-400 dark:border-neutral-800 dark:text-neutral-500",
         className,
       )}
     >
@@ -267,34 +348,27 @@ export function NotionTemplatePill({ children, className }: NotionTemplatePillPr
   );
 }
 
-type NotionTemplateListProps = {
-  items: Array<{ title: string; description?: string; meta?: string }>;
+type NotionTemplateFootnoteProps = {
+  children: ReactNode;
   className?: string;
 };
 
-export function NotionTemplateList({ items, className }: NotionTemplateListProps) {
+export function NotionTemplateFootnote({
+  children,
+  className,
+}: NotionTemplateFootnoteProps) {
   return (
-    <ul className={cn("space-y-4 text-sm text-neutral-600 dark:text-neutral-400", className)}>
-      {items.map((item, index) => (
-        <motion.li
-          key={item.title}
-          initial={{ opacity: 0, x: -12 }}
-          whileInView={{ opacity: 1, x: 0 }}
-          viewport={{ once: true, amount: 0.4 }}
-          transition={{ ...fade, delay: index * 0.05 }}
-          className="rounded-xl border border-neutral-200/80 bg-white/80 p-4 dark:border-neutral-800/60 dark:bg-neutral-950/60"
-        >
-          <div className="flex flex-wrap items-baseline justify-between gap-2">
-            <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100">{item.title}</p>
-            {item.meta ? (
-              <span className="text-[11px] uppercase tracking-[0.3em] text-neutral-400 dark:text-neutral-500">
-                {item.meta}
-              </span>
-            ) : null}
-          </div>
-          {item.description ? <p className="mt-2 text-xs text-neutral-500 dark:text-neutral-400">{item.description}</p> : null}
-        </motion.li>
-      ))}
-    </ul>
+    <motion.footer
+      initial={{ opacity: 0, y: 8 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.4 }}
+      transition={entrance}
+      className={cn(
+        "rounded-2xl border border-neutral-200/70 bg-white/80 p-5 text-xs text-neutral-500 dark:border-neutral-800/60 dark:bg-neutral-900/70 dark:text-neutral-400",
+        className,
+      )}
+    >
+      {children}
+    </motion.footer>
   );
 }
