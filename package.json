@@ -14,7 +14,7 @@
   },
   "dependencies": {
     "@ai-sdk/openai": "^2.0.52",
-    "@ai-sdk/react": "^2.0.70",
+    "@ai-sdk/react": "^2.0.71",
     "@clerk/nextjs": "^6.33.3",
     "@langchain/community": "^0.3.57",
     "@langchain/core": "^0.3.78",
@@ -30,7 +30,7 @@
     "@tiptap/extension-text-style": "^3.6.6",
     "@tiptap/react": "^3.6.6",
     "@tiptap/starter-kit": "^3.6.6",
-    "ai": "^5.0.70",
+    "ai": "^5.0.71",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^0.545.0",

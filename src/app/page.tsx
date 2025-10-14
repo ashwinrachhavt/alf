@@ -16,10 +16,10 @@ export default function Home() {
                 AI-Powered Research Platform
               </div>
               <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight mb-4 text-neutral-900 dark:text-neutral-100">
-                Information Repository
+                Alf — the modern AI butler
               </h1>
               <p className="text-base md:text-lg text-neutral-600 dark:text-neutral-400 max-w-2xl mb-8">
-                An AI agent that nurtures your notes — collects, refines, and helps you re-find knowledge when it matters.
+                For today’s knowledge workers: plans research, searches the web, extracts quotes with citations, and helps you re-find what matters.
               </p>
               <div className="flex flex-col sm:flex-row gap-3">
                 <Button asChild variant="primary" size="lg">
@@ -122,4 +122,3 @@ export default function Home() {
     </div>
   );
 }
-

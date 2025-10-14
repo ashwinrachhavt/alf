@@ -6,6 +6,7 @@ import ResponsiveMarkdown from "@/components/ResponsiveMarkdown";
 import { useRouter } from "next/navigation";
 import { MessageSquare, Copy, Save, Search as SearchIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -169,7 +170,7 @@ export default function ResearchStreamPage() {
 
       setSaved(true);
       setLogs((l) => [...l, { type: 'status', message: `saved to note ${noteId}` }]);
-      setTimeout(() => router.push(`/notes/${noteId}`), 800);
+      setTimeout(() => router.push(`/notes/${noteId}` as any), 800);
     } catch (e) {
       setLogs((l) => [...l, { type: 'error', message: 'failed to save note' }]);
     } finally {
@@ -331,21 +332,27 @@ export default function ResearchStreamPage() {
             </CardHeader>
             <CardContent className="space-y-2">
               <Button
+                className={cn(
+                  "w-full justify-start bg-neutral-200 text-neutral-800 hover:bg-neutral-300",
+                  "dark:bg-neutral-800 dark:text-white dark:hover:bg-neutral-700"
+                )}
                 onClick={copyMd}
                 disabled={!markdown}
                 variant="secondary"
                 size="sm"
-                className="w-full justify-start"
               >
                 <Copy className="w-4 h-4 mr-2" />
                 Copy Markdown
               </Button>
               <Button
+                className={cn(
+                  "w-full justify-start bg-neutral-200 text-neutral-800 hover:bg-neutral-300",
+                  "dark:bg-neutral-800 dark:text-white dark:hover:bg-neutral-700"
+                )}
                 onClick={saveAsNote}
                 disabled={!markdown || saving || saved}
                 variant="primary"
                 size="sm"
-                className="w-full justify-start"
               >
                 <Save className="w-4 h-4 mr-2" />
                 {saving ? 'Saving...' : saved ? 'Saved!' : 'Save as Note'}
@@ -397,16 +404,40 @@ export default function ResearchStreamPage() {
                 />
               </div>
               <div className="grid grid-cols-2 gap-2">
-                <Button onClick={firecrawlScrape} disabled={!fcUrl} variant="secondary" size="sm">
+                <Button
+                  onClick={firecrawlScrape}
+                  disabled={!fcUrl}
+                  variant="secondary"
+                  size="sm"
+                  className="dark:bg-neutral-800 dark:text-white dark:hover:bg-neutral-700"
+                >
                   Scrape
                 </Button>
-                <Button onClick={firecrawlExtract} disabled={!fcUrl} variant="secondary" size="sm">
+                <Button
+                  onClick={firecrawlExtract}
+                  disabled={!fcUrl}
+                  variant="secondary"
+                  size="sm"
+                  className="dark:bg-neutral-800 dark:text-white dark:hover:bg-neutral-700"
+                >
                   Extract
                 </Button>
-                <Button onClick={firecrawlCrawlWait} disabled={!fcUrl} variant="secondary" size="sm">
+                <Button
+                  onClick={firecrawlCrawlWait}
+                  disabled={!fcUrl}
+                  variant="secondary"
+                  size="sm"
+                  className="dark:bg-neutral-800 dark:text-white dark:hover:bg-neutral-700"
+                >
                   Crawl
                 </Button>
-                <Button onClick={firecrawlSearch} disabled={!query.trim()} variant="primary" size="sm">
+                <Button
+                  onClick={firecrawlSearch}
+                  disabled={!query.trim()}
+                  variant="primary"
+                  size="sm"
+                  className="dark:bg-neutral-800 dark:text-white dark:hover:bg-neutral-700"
+                >
                   Search
                 </Button>
               </div>

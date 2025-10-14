@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from 'react';
-import { useChat } from '@ai-sdk/react';
+import { useChat } from 'ai/react';
 import { X, Send, Sparkles, Loader2, CheckCircle2 } from 'lucide-react';
 
 interface AIAssistantProps {
@@ -65,7 +65,7 @@ export default function AIAssistant({ onClose, editorContent, onApplyEdit }: AIA
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {messages.length === 0 && (
+        {chat.messages.length === 0 && (
           <div className="text-center py-8">
             <div className="w-16 h-16 bg-gradient-to-br from-purple-100 to-blue-100 dark:from-purple-900/20 dark:to-blue-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
               <Sparkles className="w-8 h-8 text-purple-600 dark:text-purple-400" />
@@ -81,7 +81,7 @@ export default function AIAssistant({ onClose, editorContent, onApplyEdit }: AIA
                 <button
                   key={prompt.label}
                   onClick={() => {
-                    append({
+                    chat.append({
                       role: 'user',
                       content: prompt.prompt,
                     });
@@ -95,7 +95,7 @@ export default function AIAssistant({ onClose, editorContent, onApplyEdit }: AIA
           </div>
         )}
 
-        {messages.map((message, index) => (
+        {chat.messages.map((message, index) => (
           <div
             key={index}
             className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}

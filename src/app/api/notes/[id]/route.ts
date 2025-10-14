@@ -1,23 +1,36 @@
-import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
 
+// GET /api/notes/[id] - Get single note
 export async function GET(
   request: Request,
-  ctx: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await ctx.params;
+    const { id } = await params;
     const note = await prisma.note.findUnique({
       where: { id },
       include: {
         linkedNotes: {
           include: {
-            targetNote: true,
+            targetNote: {
+              select: {
+                id: true,
+                title: true,
+                icon: true,
+              },
+            },
           },
         },
         linkedFrom: {
           include: {
-            sourceNote: true,
+            sourceNote: {
+              select: {
+                id: true,
+                title: true,
+                icon: true,
+              },
+            },
           },
         },
       },
@@ -25,83 +38,79 @@ export async function GET(
 
     if (!note) {
       return NextResponse.json(
-        { success: false, error: 'Note not found' },
+        { success: false, error: "Note not found" },
         { status: 404 }
       );
     }
 
     return NextResponse.json({ success: true, data: note });
-  } catch (error) {
-    console.error('Failed to fetch note:', error);
+  } catch (error: any) {
     return NextResponse.json(
-      { success: false, error: 'Failed to fetch note' },
+      { success: false, error: error.message },
       { status: 500 }
     );
   }
 }
 
-export async function PATCH(
+// PUT /api/notes/[id] - Update note
+export async function PUT(
   request: Request,
-  ctx: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await ctx.params;
+    const { id } = await params;
     const body = await request.json();
     const {
       title,
       icon,
+      coverUrl,
       content,
       contentMd,
       tags,
       category,
-      coverUrl,
       isFavorite,
       isArchived,
     } = body;
 
-    const updateData: any = {};
-    if (title !== undefined) updateData.title = title;
-    if (icon !== undefined) updateData.icon = icon;
-    if (content !== undefined) updateData.content = content;
-    if (contentMd !== undefined) updateData.contentMd = contentMd;
-    if (tags !== undefined) updateData.tags = tags;
-    if (category !== undefined) updateData.category = category;
-    if (coverUrl !== undefined) updateData.coverUrl = coverUrl;
-    if (isFavorite !== undefined) updateData.isFavorite = isFavorite;
-    if (isArchived !== undefined) updateData.isArchived = isArchived;
-
     const note = await prisma.note.update({
       where: { id },
-      data: updateData,
+      data: {
+        ...(title !== undefined && { title }),
+        ...(icon !== undefined && { icon }),
+        ...(coverUrl !== undefined && { coverUrl }),
+        ...(content !== undefined && { content }),
+        ...(contentMd !== undefined && { contentMd }),
+        ...(tags !== undefined && { tags }),
+        ...(category !== undefined && { category }),
+        ...(isFavorite !== undefined && { isFavorite }),
+        ...(isArchived !== undefined && { isArchived }),
+      },
     });
 
-    console.log('Note updated:', note.id, 'Title:', note.title);
-
     return NextResponse.json({ success: true, data: note });
-  } catch (error) {
-    console.error('Failed to update note:', error);
+  } catch (error: any) {
     return NextResponse.json(
-      { success: false, error: 'Failed to update note' },
+      { success: false, error: error.message },
       { status: 500 }
     );
   }
 }
 
+// DELETE /api/notes/[id] - Delete note
 export async function DELETE(
   request: Request,
-  ctx: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await ctx.params;
+    const { id } = await params;
     await prisma.note.delete({
       where: { id },
     });
 
-    return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error('Failed to delete note:', error);
+    return NextResponse.json({ success: true, data: { id } });
+  } catch (error: any) {
     return NextResponse.json(
-      { success: false, error: 'Failed to delete note' },
+      { success: false, error: error.message },
       { status: 500 }
     );
   }

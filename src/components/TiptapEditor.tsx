@@ -61,6 +61,8 @@ export default function TiptapEditor({
     ],
     content: value ?? { type: "doc", content: [{ type: "paragraph" }] },
     autofocus: true,
+    // Avoid hydration mismatches in SSR
+    immediatelyRender: false,
     onUpdate: ({ editor }: any) => {
       try {
         const json = editor.getJSON();
@@ -85,4 +87,3 @@ export default function TiptapEditor({
     </div>
   );
 }
-
