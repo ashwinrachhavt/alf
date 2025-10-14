@@ -3,15 +3,16 @@ import { prisma } from '@/lib/prisma';
 
 export async function POST(
   request: Request,
-  { params }: { params: { id: string } }
+  ctx: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await ctx.params;
     const body = await request.json();
     const { targetNoteId, linkType } = body;
 
     const link = await prisma.noteLink.create({
       data: {
-        sourceNoteId: params.id,
+        sourceNoteId: id,
         targetNoteId,
         linkType: linkType || 'related',
       },
@@ -29,9 +30,10 @@ export async function POST(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  ctx: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await ctx.params;
     const { searchParams } = new URL(request.url);
     const targetNoteId = searchParams.get('targetNoteId');
 
@@ -44,7 +46,7 @@ export async function DELETE(
 
     await prisma.noteLink.deleteMany({
       where: {
-        sourceNoteId: params.id,
+        sourceNoteId: id,
         targetNoteId,
       },
     });

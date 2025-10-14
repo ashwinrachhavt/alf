@@ -253,14 +253,98 @@ create table if not exists research_sources (
 
 ---
 
-## UI
+## UI & Design System
 
-Install **shadcn/ui** and scaffold a minimal research console (cards, tables, toasts). ([Shadcn][8])
+ALF uses a comprehensive design system built with **shadcn/ui** components and Tailwind CSS. ([Shadcn][8])
+
+### Design System Documentation
+
+See `DESIGN_SYSTEM.md` in the project root for the complete design system guide, including:
+- Color palette (light & dark modes)
+- Typography scale
+- Component library
+- Layout patterns
+- Accessibility guidelines
+- Mobile responsive patterns
+
+### Installing Components
 
 ```bash
-# example
-npx shadcn-ui@latest add card table textarea button input toast
+# UI components are pre-installed in src/components/ui/
+# Available components:
+# - Button (with variants: primary, secondary, ghost, destructive)
+# - Card (with CardHeader, CardTitle, CardDescription, CardContent, CardFooter)
+# - Input
+# - Textarea
+# - Badge (with variants: default, success, error, warning)
+# - Separator
 ```
+
+### Using Components
+
+```tsx
+import { Button } from "@/components/ui/button";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+
+// Button variants
+<Button variant="primary">Save</Button>
+<Button variant="secondary">Cancel</Button>
+<Button variant="destructive">Delete</Button>
+<Button variant="ghost">Close</Button>
+
+// Button sizes
+<Button size="sm">Small</Button>
+<Button size="md">Medium</Button>
+<Button size="lg">Large</Button>
+
+// Card structure
+<Card>
+  <CardHeader>
+    <CardTitle>Title</CardTitle>
+  </CardHeader>
+  <CardContent>
+    <p className="text-neutral-600 dark:text-neutral-400">Content</p>
+  </CardContent>
+</Card>
+```
+
+### Color Guidelines
+
+**Light Mode:**
+- Background: `#ffffff` (white)
+- Surface: `#fafafa` (subtle gray)
+- Text: `#0a0a0a` (near black) - Primary text
+- Muted: `#737373` (gray) - Secondary text (WCAG AA compliant at 4.54:1)
+- Border: `#e5e5e5` (light gray)
+
+**Dark Mode:**
+- Background: `#0a0a0a` (near black)
+- Surface: `#171717` (dark gray)
+- Text: `#fafafa` (white) - Primary text
+- Muted: `#a3a3a3` (light gray) - Secondary text (WCAG AA compliant)
+- Border: `#262626` (dark gray)
+
+### Responsive Patterns
+
+Use mobile-first breakpoints:
+```tsx
+// Mobile: full width, Desktop: 2 columns
+<div className="grid gap-4 md:grid-cols-2">
+
+// Mobile: hidden, Desktop: visible
+<div className="hidden md:block">
+
+// Mobile: stacked, Desktop: sidebar layout
+<div className="grid gap-6 lg:grid-cols-[280px_1fr]">
+```
+
+### Accessibility
+
+- All text meets WCAG 2.1 AA contrast ratios (4.5:1 for normal text)
+- Focus states use visible ring: `focus-visible:ring-2`
+- Interactive elements have minimum 40px touch targets
+- Use semantic HTML: `<button>` for actions, `<a>` for navigation
 
 ---
 

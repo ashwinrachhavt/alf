@@ -21,6 +21,12 @@ export default function Nav() {
               Deep Research
             </Link>
             <Link
+              href="/notes"
+              className="px-3 py-1.5 rounded-md hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+            >
+              Notes
+            </Link>
+            <Link
               href="/threads"
               className="px-3 py-1.5 rounded-md hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
             >

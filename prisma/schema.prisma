@@ -88,8 +88,39 @@ model ResearchRun {
   contentDoc Json?
   createdAt  DateTime       @default(now())
   updatedAt  DateTime       @updatedAt
+  sources    ResearchSource[]
 
   @@index([threadId, updatedAt])
+}
+
+// Per-URL artifacts and optional quotes captured during research
+model ResearchSource {
+  id          String       @id @default(cuid())
+  runId       String
+  run         ResearchRun  @relation(fields: [runId], references: [id], onDelete: Cascade)
+  url         String
+  title       String?
+  author      String?
+  publishedAt DateTime?
+  rank        Int?
+  score       Float?
+  content     String?      @db.Text // truncated snapshot/text
+  quotes      ResearchQuote[]
+  createdAt   DateTime     @default(now())
+
+  @@index([runId])
+  @@index([url])
+}
+
+model ResearchQuote {
+  id        String         @id @default(cuid())
+  sourceId  String
+  source    ResearchSource @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  quote     String         @db.Text
+  claim     String?
+  createdAt DateTime       @default(now())
+
+  @@index([sourceId])
 }
 
 // Notes system - unified notes with metadata and linking
