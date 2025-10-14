@@ -1,4 +1,3 @@
-import { getRelevantDocs } from "@/lib/knowledge";
 import OpenAI from "openai";
 
 export const maxDuration = 300;
@@ -21,12 +20,6 @@ export async function POST(req: Request) {
       );
     }
 
-    // Get relevant knowledge base context
-    const kb = await getRelevantDocs(query, 3);
-    const kbContext = kb
-      .map((d) => `# KB: ${d.path}\n\n${d.content.substring(0, 4000)}`)
-      .join("\n\n---\n\n");
-
     const systemPrompt = `You are a Deep Research Agent specializing in comprehensive information gathering and analysis.
 
 RESEARCH PROCESS:
@@ -46,10 +39,7 @@ QUALITY STANDARDS:
 - Structure your response clearly
 - Include factual details and context
 - Note any limitations or uncertainties`;
-
-    const userPrompt = kbContext 
-      ? `Knowledge Base Context:\n${kbContext}\n\n---\n\nResearch Task: ${query}`
-      : `Research Task: ${query}`;
+    const userPrompt = `Research Task: ${query}`;
 
     const stream = await client.chat.completions.create({
       model: "gpt-4o-mini",
