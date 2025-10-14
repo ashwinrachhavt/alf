@@ -1,172 +1,44 @@
 import Link from "next/link";
 
-import {
-  NotionTemplate,
-  NotionTemplateCard,
-  NotionTemplateDivider,
-  NotionTemplateFootnote,
-  NotionTemplateGrid,
-  NotionTemplateHeader,
-  NotionTemplateList,
-  NotionTemplatePill,
-  NotionTemplateSection,
-  NotionTemplateToolbar,
-} from "@/components/notion";
-import { Button } from "@/components/ui/button";
-
-const principles = [
-  {
-    title: "Neutral Layers",
-    description:
-      "Stack warm greys with controlled contrast. Rely on shadows, borders, and texture instead of saturated color.",
-    icon: "◑",
-  },
-  {
-    title: "Rhythmic Spacing",
-    description:
-      "Base spacing on 4px increments. Keep blocks airy and align to a 12-column grid for instant balance.",
-    icon: "⌘",
-  },
-  {
-    title: "Purposeful Motion",
-    description:
-      "Ease content in with small y-axes shifts and restrained durations so interactions stay calm.",
-    icon: "≋",
-  },
-];
-
-const buildingBlocks = [
-  {
-    title: "Surface Shell",
-    description:
-      "Glassmorphic frame with radial ambience for the hero or top-level summary views.",
-    eyebrow: "Layout",
-    icon: "☰",
-    actions: "Wrap primary flows to get instant Notion vibes.",
-  },
-  {
-    title: "Split Section",
-    description:
-      "Two-column detail block with sticky guidance on the left and flexible content on the right.",
-    eyebrow: "Structure",
-    icon: "☷",
-    actions: "Great for feature rundowns or knowledge hubs.",
-  },
-  {
-    title: "Minimal Card",
-    description:
-      "Bordered storytelling block with eyebrow, icon slot, and optional metadata.",
-    eyebrow: "Component",
-    icon: "□",
-    actions: "Use for resources, highlights, or callouts.",
-  },
-];
-
-const motionRecipes = [
-  {
-    title: "Surface Entrance",
-    description:
-      "Fade from 0 to 1 with a 20px rise over 450ms. The ambient grid lines reinforce depth without noise.",
-    meta: "load",
-  },
-  {
-    title: "Section Reveal",
-    description:
-      "Trigger whileInView with a -64px margin to let blocks glide into place just before they appear.",
-    meta: "scroll",
-  },
-  {
-    title: "Hover Lift",
-    description:
-      "Raise cards by 6px with a 300ms ease to communicate affordance while keeping the silhouette tight.",
-    meta: "hover",
-  },
-];
-
 export default function Home() {
   return (
-    <main className="mx-auto max-w-5xl px-4 py-12">
-      <NotionTemplate>
-        <NotionTemplateHeader
-          kicker="Design System"
-          title="Monochrome Notion Starter"
-          description="A black and white template kit that fuses framer-motion patterns with shadcn primitives for Notion-style knowledge work."
-          meta={<span>Version 0.3 · Updated April 2025</span>}
-          actions={
-            <>
-              <Button asChild variant="outline">
-                <Link href="/research">Start research</Link>
-              </Button>
-              <Button variant="ghost" className="border border-neutral-200/60 text-neutral-700 dark:border-neutral-800 dark:text-neutral-100">
-                Duplicate template
-              </Button>
-            </>
-          }
-        />
-
-        <NotionTemplateToolbar>
-          <NotionTemplatePill>Monochrome</NotionTemplatePill>
-          <NotionTemplatePill>Framer Motion</NotionTemplatePill>
-          <NotionTemplatePill>Shadcn Ready</NotionTemplatePill>
-        </NotionTemplateToolbar>
-
-        <NotionTemplateSection
-          kicker="Principles"
-          title="Foundation Rules"
-          description="Carry these through every block to preserve the quiet, methodical Notion aesthetic."
-        >
-          <NotionTemplateGrid columns={3}>
-            {principles.map((principle) => (
-              <NotionTemplateCard
-                key={principle.title}
-                title={principle.title}
-                description={principle.description}
-                icon={<span className="text-lg">{principle.icon}</span>}
-              />
-            ))}
-          </NotionTemplateGrid>
-        </NotionTemplateSection>
-
-        <NotionTemplateDivider label="Reusable Blocks" />
-
-        <NotionTemplateSection
-          title="Composable Surfaces"
-          description="Drop these shell patterns into any page, then swap in shadcn/ui primitives for inputs, tables, or toggles."
-          aside={
-            <p>
-              Keep typography at 14–16px with <span className="font-medium text-neutral-900 dark:text-neutral-100">1.5rem</span> line height to mirror Notion's calm cadence.
-            </p>
-          }
-        >
-          <NotionTemplateGrid columns={3}>
-            {buildingBlocks.map((block) => (
-              <NotionTemplateCard
-                key={block.title}
-                title={block.title}
-                description={block.description}
-                eyebrow={block.eyebrow}
-                icon={<span className="text-lg">{block.icon}</span>}
-                actions={block.actions}
-              />
-            ))}
-          </NotionTemplateGrid>
-        </NotionTemplateSection>
-
-        <NotionTemplateSection
-          kicker="Motion"
-          title="Framer Motion Recipes"
-          description="These interactions are wired directly into each primitive so defaults feel cohesive."
-          layout="single"
-        >
-          <NotionTemplateList items={motionRecipes} />
-        </NotionTemplateSection>
-
-        <NotionTemplateFootnote>
-          <p>
-            Tip: Pair these shells with <span className="font-medium text-neutral-900 dark:text-neutral-100">shadcn/ui</span> buttons, tables, and dialogs to stay consistent while scaling.
+    <div className="space-y-10">
+      <section className="relative overflow-hidden rounded-2xl border border-neutral-200/70 dark:border-neutral-800/70 p-8 md:p-10 bg-gradient-to-b from-transparent to-neutral-50 dark:to-neutral-950">
+        <div className="relative z-10 max-w-3xl">
+          <h1 className="text-2xl md:text-3xl font-semibold tracking-tight mb-3">Information Repository</h1>
+          <p className="text-sm md:text-base text-neutral-600 dark:text-neutral-300 max-w-2xl">
+            An AI agent that nurtures your notes — collects, refines, and helps you re‑find knowledge when it matters.
           </p>
-        </NotionTemplateFootnote>
-      </NotionTemplate>
-    </main>
+          <div className="mt-6 flex flex-wrap gap-2">
+            <Link href="/research" className="inline-flex items-center rounded-md border border-neutral-300 dark:border-neutral-700 px-3 py-1.5 text-sm hover:bg-neutral-100 dark:hover:bg-neutral-900">
+              Start Research
+            </Link>
+            <Link href="/threads" className="inline-flex items-center rounded-md border border-neutral-300 dark:border-neutral-700 px-3 py-1.5 text-sm hover:bg-neutral-100 dark:hover:bg-neutral-900">
+              Threads
+            </Link>
+          </div>
+        </div>
+        <div className="pointer-events-none absolute inset-0 opacity-60">
+          <div className="absolute -top-24 -right-24 h-72 w-72 rounded-full blur-3xl bg-neutral-200/40 dark:bg-neutral-800/40" />
+          <div className="absolute -bottom-24 -left-24 h-72 w-72 rounded-full blur-3xl bg-neutral-200/40 dark:bg-neutral-800/40" />
+        </div>
+      </section>
+
+      <section className="grid gap-4 md:grid-cols-3">
+        <div className="rounded-xl border border-neutral-200/70 dark:border-neutral-800/70 p-4">
+          <h2 className="font-medium">Grounded Research</h2>
+          <p className="text-sm text-neutral-600 dark:text-neutral-400">Live web search with quotes, URLs, and dates.</p>
+        </div>
+        <div className="rounded-xl border border-neutral-200/70 dark:border-neutral-800/70 p-4">
+          <h2 className="font-medium">Nurtured Notes</h2>
+          <p className="text-sm text-neutral-600 dark:text-neutral-400">Stream results, then refine in the editor.</p>
+        </div>
+        <div className="rounded-xl border border-neutral-200/70 dark:border-neutral-800/70 p-4">
+          <h2 className="font-medium">Minimal Aesthetic</h2>
+          <p className="text-sm text-neutral-600 dark:text-neutral-400">Black & white, subtle shadows, light/dark modes.</p>
+        </div>
+      </section>
+    </div>
   );
 }
+

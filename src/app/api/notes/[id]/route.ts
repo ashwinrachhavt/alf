@@ -1,20 +1,105 @@
-import { NextResponse } from "next/server";
-import { deleteItem, getItem, upsertNote } from "@/lib/store";
+import { NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
 
-export async function GET(_: Request, { params }: { params: { id: string } }) {
-  const item = await getItem(params.id);
-  if (!item) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  return NextResponse.json(item);
+export async function GET(
+  request: Request,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const note = await prisma.note.findUnique({
+      where: { id: params.id },
+      include: {
+        linkedNotes: {
+          include: {
+            targetNote: true,
+          },
+        },
+        linkedFrom: {
+          include: {
+            sourceNote: true,
+          },
+        },
+      },
+    });
+
+    if (!note) {
+      return NextResponse.json(
+        { success: false, error: 'Note not found' },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({ success: true, data: note });
+  } catch (error) {
+    console.error('Failed to fetch note:', error);
+    return NextResponse.json(
+      { success: false, error: 'Failed to fetch note' },
+      { status: 500 }
+    );
+  }
 }
 
-export async function PUT(req: Request, { params }: { params: { id: string } }) {
-  const body = await req.json();
-  const updated = await upsertNote({ id: params.id, title: body.title, content: body.content, tags: body.tags });
-  return NextResponse.json(updated);
+export async function PATCH(
+  request: Request,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const body = await request.json();
+    const {
+      title,
+      icon,
+      content,
+      contentMd,
+      tags,
+      category,
+      coverUrl,
+      isFavorite,
+      isArchived,
+    } = body;
+
+    const updateData: any = {};
+    if (title !== undefined) updateData.title = title;
+    if (icon !== undefined) updateData.icon = icon;
+    if (content !== undefined) updateData.content = content;
+    if (contentMd !== undefined) updateData.contentMd = contentMd;
+    if (tags !== undefined) updateData.tags = tags;
+    if (category !== undefined) updateData.category = category;
+    if (coverUrl !== undefined) updateData.coverUrl = coverUrl;
+    if (isFavorite !== undefined) updateData.isFavorite = isFavorite;
+    if (isArchived !== undefined) updateData.isArchived = isArchived;
+
+    const note = await prisma.note.update({
+      where: { id: params.id },
+      data: updateData,
+    });
+
+    console.log('Note updated:', note.id, 'Title:', note.title);
+
+    return NextResponse.json({ success: true, data: note });
+  } catch (error) {
+    console.error('Failed to update note:', error);
+    return NextResponse.json(
+      { success: false, error: 'Failed to update note' },
+      { status: 500 }
+    );
+  }
 }
 
-export async function DELETE(_: Request, { params }: { params: { id: string } }) {
-  await deleteItem(params.id);
-  return NextResponse.json({ ok: true });
-}
+export async function DELETE(
+  request: Request,
+  { params }: { params: { id: string } }
+) {
+  try {
+    await prisma.note.delete({
+      where: { id: params.id },
+    });
 
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Failed to delete note:', error);
+    return NextResponse.json(
+      { success: false, error: 'Failed to delete note' },
+      { status: 500 }
+    );
+  }
+}
