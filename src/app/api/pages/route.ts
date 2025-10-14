@@ -1,22 +1,63 @@
-import { NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
+import { NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
 
-export async function GET(req: Request) {
-  const { searchParams } = new URL(req.url);
-  const workspaceId = searchParams.get("workspaceId") || undefined;
-  const pages = await prisma.page.findMany({
-    where: workspaceId ? { workspaceId } : undefined,
-    orderBy: { updatedAt: "desc" },
-    select: { id: true, workspaceId: true, title: true, icon: true, coverUrl: true, isArchived: true, updatedAt: true },
-  });
-  return NextResponse.json({ data: pages });
+export async function GET(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const workspaceId = searchParams.get('workspaceId');
+    const favorites = searchParams.get('favorites') === 'true';
+    const archived = searchParams.get('archived') === 'true';
+
+    const where: any = {};
+    if (workspaceId) where.workspaceId = workspaceId;
+    if (favorites) where.isFavorite = true;
+    where.isArchived = archived;
+    where.parentId = null; // Only top-level pages
+
+    const pages = await prisma.page.findMany({
+      where,
+      orderBy: { updatedAt: 'desc' },
+    });
+
+    return NextResponse.json({ success: true, data: pages });
+  } catch (error) {
+    console.error('Failed to fetch pages:', error);
+    return NextResponse.json({ success: false, error: 'Failed to fetch pages' }, { status: 500 });
+  }
 }
 
-export async function POST(req: Request) {
-  const body = await req.json();
-  const { workspaceId, title, icon, coverUrl } = body || {};
-  if (!workspaceId) return NextResponse.json({ error: "workspaceId is required" }, { status: 400 });
-  const page = await prisma.page.create({ data: { workspaceId, title: title ?? undefined, icon, coverUrl } });
-  return NextResponse.json({ data: page });
-}
+export async function POST(request: Request) {
+  try {
+    const body = await request.json();
+    const { workspaceId, title, icon, content } = body;
 
+    // Get or create a default workspace if not provided
+    let finalWorkspaceId = workspaceId;
+    if (!finalWorkspaceId) {
+      let workspace = await prisma.workspace.findFirst();
+      if (!workspace) {
+        workspace = await prisma.workspace.create({
+          data: {
+            name: 'My Workspace',
+            icon: '📁',
+          },
+        });
+      }
+      finalWorkspaceId = workspace.id;
+    }
+
+    const page = await prisma.page.create({
+      data: {
+        workspaceId: finalWorkspaceId,
+        title: title || 'Untitled',
+        icon: icon || '📄',
+        content: content || null,
+      },
+    });
+
+    return NextResponse.json({ success: true, data: page });
+  } catch (error) {
+    console.error('Failed to create page:', error);
+    return NextResponse.json({ success: false, error: 'Failed to create page' }, { status: 500 });
+  }
+}

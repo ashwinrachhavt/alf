@@ -10,6 +10,7 @@ datasource db {
 model Workspace {
   id        String   @id @default(cuid())
   name      String
+  icon      String?  @default("📁")
   pages     Page[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -18,16 +19,24 @@ model Workspace {
 model Page {
   id          String    @id @default(cuid())
   workspaceId String
-  workspace   Workspace @relation(fields: [workspaceId], references: [id])
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   title       String    @default("Untitled")
-  icon        String?
+  icon        String?   @default("📄")
   coverUrl    String?
+  content     Json? // Tiptap JSON content
   blocks      Block[]   @relation("PageBlocks")
   isArchived  Boolean   @default(false)
+  isFavorite  Boolean   @default(false)
+  parentId    String? // For nested pages
+  parent      Page?     @relation("SubPages", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  subPages    Page[]    @relation("SubPages")
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
   @@index([workspaceId, updatedAt])
+  @@index([parentId])
+  @@index([isFavorite])
+  @@index([isArchived])
 }
 
 enum BlockType {
@@ -42,18 +51,18 @@ enum BlockType {
 }
 
 model Block {
-  id        String   @id @default(cuid())
+  id        String    @id @default(cuid())
   pageId    String
-  page      Page     @relation("PageBlocks", fields: [pageId], references: [id])
+  page      Page      @relation("PageBlocks", fields: [pageId], references: [id], onDelete: Cascade)
   parentId  String?
   order     Int
   type      BlockType
-  text      String   @default("")
+  text      String    @default("")
   props     Json?
-  collapsed Boolean  @default(false)
+  collapsed Boolean   @default(false)
 
-  children  Block[]  @relation("BlockChildren")
-  parent    Block?   @relation("BlockChildren", fields: [parentId], references: [id])
+  children Block[] @relation("BlockChildren")
+  parent   Block?  @relation("BlockChildren", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -61,3 +70,74 @@ model Block {
   @@index([pageId, parentId, order])
 }
 
+// Research threads with markdown runs (Tiptap JSON optional)
+model ResearchThread {
+  id        String        @id @default(cuid())
+  title     String        @default("Untitled Thread")
+  runs      ResearchRun[]
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+}
+
+model ResearchRun {
+  id         String         @id @default(cuid())
+  threadId   String
+  thread     ResearchThread @relation(fields: [threadId], references: [id])
+  title      String?        @default("")
+  contentMd  String         @db.Text
+  contentDoc Json?
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+
+  @@index([threadId, updatedAt])
+}
+
+// Notes system - unified notes with metadata and linking
+model Note {
+  id        String  @id @default(cuid())
+  title     String  @default("Untitled Note")
+  icon      String? @default("📝")
+  coverUrl  String?
+  content   Json? // Tiptap JSON document
+  contentMd String? @db.Text // Markdown version for search/export
+
+  // Metadata
+  tags     String[] // Array of tags
+  category String? // Category/folder
+
+  // Linking
+  linkedNotes NoteLink[] @relation("SourceNote")
+  linkedFrom  NoteLink[] @relation("TargetNote")
+
+  // Source tracking
+  sourceType String? // "research", "manual", "thread"
+  sourceId   String? // ID of source (research run, thread, etc)
+
+  // Organization
+  isFavorite Boolean @default(false)
+  isArchived Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([category])
+  @@index([isFavorite])
+  @@index([isArchived])
+  @@index([sourceType, sourceId])
+  @@index([updatedAt])
+}
+
+// Note-to-Note linking for knowledge graph
+model NoteLink {
+  id           String   @id @default(cuid())
+  sourceNoteId String
+  targetNoteId String
+  sourceNote   Note     @relation("SourceNote", fields: [sourceNoteId], references: [id], onDelete: Cascade)
+  targetNote   Note     @relation("TargetNote", fields: [targetNoteId], references: [id], onDelete: Cascade)
+  linkType     String? // "reference", "related", "follows", etc.
+  createdAt    DateTime @default(now())
+
+  @@unique([sourceNoteId, targetNoteId])
+  @@index([sourceNoteId])
+  @@index([targetNoteId])
+}

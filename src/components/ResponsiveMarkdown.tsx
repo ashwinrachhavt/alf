@@ -1,7 +1,6 @@
 "use client";
 
 import ReactMarkdown from "react-markdown";
-import { motion } from "framer-motion";
 
 interface ResponsiveMarkdownProps {
   content: string;
@@ -10,40 +9,17 @@ interface ResponsiveMarkdownProps {
 
 export default function ResponsiveMarkdown({ content, className = "" }: ResponsiveMarkdownProps) {
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.3 }}
-      className={`prose prose-sm max-w-none dark:prose-invert ${className}`}
-    >
+    <div className={`prose prose-sm max-w-none dark:prose-invert ${className}`}>
       <ReactMarkdown
         components={{
           h1: ({ children }) => (
-            <motion.h1 
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="text-3xl font-bold mb-6 text-foreground border-b border-foreground/20 pb-2"
-            >
-              {children}
-            </motion.h1>
+            <h1 className="text-3xl font-bold mb-6 text-foreground border-b border-foreground/20 pb-2">{children}</h1>
           ),
           h2: ({ children }) => (
-            <motion.h2 
-              initial={{ opacity: 0, y: -8 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="text-2xl font-semibold mb-4 mt-8 text-foreground"
-            >
-              {children}
-            </motion.h2>
+            <h2 className="text-2xl font-semibold mb-4 mt-8 text-foreground">{children}</h2>
           ),
           h3: ({ children }) => (
-            <motion.h3 
-              initial={{ opacity: 0, y: -6 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="text-xl font-medium mb-3 mt-6 text-foreground"
-            >
-              {children}
-            </motion.h3>
+            <h3 className="text-xl font-medium mb-3 mt-6 text-foreground">{children}</h3>
           ),
           h4: ({ children }) => (
             <h4 className="text-lg font-medium mb-2 mt-4 text-foreground">{children}</h4>
@@ -78,13 +54,7 @@ export default function ResponsiveMarkdown({ content, className = "" }: Responsi
             </code>
           ),
           pre: ({ children }) => (
-            <motion.pre 
-              initial={{ opacity: 0, scale: 0.98 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="p-4 bg-foreground/5 border border-foreground/10 rounded-lg overflow-x-auto mb-4 text-sm"
-            >
-              {children}
-            </motion.pre>
+            <pre className="p-4 bg-foreground/5 border border-foreground/10 rounded-lg overflow-x-auto mb-4 text-sm">{children}</pre>
           ),
           blockquote: ({ children }) => (
             <motion.blockquote 
@@ -115,13 +85,7 @@ export default function ResponsiveMarkdown({ content, className = "" }: Responsi
               {children}
             </td>
           ),
-          hr: () => (
-            <motion.hr 
-              initial={{ opacity: 0, scaleX: 0 }}
-              animate={{ opacity: 1, scaleX: 1 }}
-              className="my-8 border-foreground/20"
-            />
-          ),
+          hr: () => (<hr className="my-8 border-foreground/20" />),
           a: ({ children, href }) => (
             <a 
               href={href}
@@ -133,18 +97,13 @@ export default function ResponsiveMarkdown({ content, className = "" }: Responsi
             </a>
           ),
           img: ({ src, alt }) => (
-            <motion.img 
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              src={src} 
-              alt={alt} 
-              className="max-w-full h-auto rounded-lg border border-foreground/10 my-4"
-            />
+            // @ts-ignore
+            <img src={src} alt={alt} className="max-w-full h-auto rounded-lg border border-foreground/10 my-4" />
           ),
         }}
       >
         {content}
       </ReactMarkdown>
-    </motion.div>
+    </div>
   );
 }

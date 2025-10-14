@@ -1,24 +1,67 @@
 import Link from "next/link";
 import ThemeToggle from "@/components/ThemeToggle";
 import { SignedIn, SignedOut, SignInButton, SignUpButton, UserButton } from "@clerk/nextjs";
+import { Search, Bell } from "lucide-react";
 
 export default function Nav() {
   return (
-    <header className="sticky top-0 z-10 border-b border-border bg-background/80 backdrop-blur">
-      <div className="mx-auto max-w-6xl px-4 h-14 flex items-center justify-between">
-        <nav className="flex items-center gap-4 text-sm">
-          <Link href="/" className="hover:underline">ALF</Link>
-          <Link href="/research" className="hover:underline">Research</Link>
+    <header className="sticky top-0 z-50 border-b border-neutral-200/50 dark:border-neutral-800/50 bg-white/80 dark:bg-neutral-900/80 backdrop-blur-xl">
+      <div className="mx-auto max-w-7xl px-6 h-14 flex items-center justify-between">
+        <nav className="flex items-center gap-6">
+          <Link href="/" className="flex items-center gap-2 font-semibold text-lg">
+            <span className="text-2xl">🤖</span>
+            <span>ALF</span>
+          </Link>
+          <div className="hidden md:flex items-center gap-4 text-sm">
+            
+            <Link
+              href="/research"
+              className="px-3 py-1.5 rounded-md hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+            >
+              Deep Research
+            </Link>
+            <Link
+              href="/threads"
+              className="px-3 py-1.5 rounded-md hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+            >
+              Threads
+            </Link>
+          </div>
         </nav>
+
         <div className="flex items-center gap-3">
+          <button
+            className="p-2 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-md transition-colors"
+            title="Search"
+          >
+            <Search className="w-5 h-5" />
+          </button>
+
+          <button
+            className="p-2 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-md transition-colors"
+            title="Notifications"
+          >
+            <Bell className="w-5 h-5" />
+          </button>
+
+          <ThemeToggle />
+
           <SignedOut>
-            <SignInButton mode="modal" />
-            <SignUpButton mode="modal" />
+            <SignInButton mode="modal">
+              <button className="px-4 py-2 text-sm font-medium rounded-md hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors">
+                Sign In
+              </button>
+            </SignInButton>
+            <SignUpButton mode="modal">
+              <button className="px-4 py-2 text-sm font-medium bg-black dark:bg-white text-white dark:text-black rounded-md hover:opacity-90 transition-opacity">
+                Sign Up
+              </button>
+            </SignUpButton>
           </SignedOut>
+
           <SignedIn>
             <UserButton afterSignOutUrl="/" />
           </SignedIn>
-          <ThemeToggle />
         </div>
       </div>
     </header>
