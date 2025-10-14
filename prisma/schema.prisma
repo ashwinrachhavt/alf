@@ -1,0 +1,63 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Workspace {
+  id        String   @id @default(cuid())
+  name      String
+  pages     Page[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Page {
+  id          String    @id @default(cuid())
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id])
+  title       String    @default("Untitled")
+  icon        String?
+  coverUrl    String?
+  blocks      Block[]   @relation("PageBlocks")
+  isArchived  Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([workspaceId, updatedAt])
+}
+
+enum BlockType {
+  paragraph
+  heading1
+  heading2
+  heading3
+  todo
+  callout
+  code
+  divider
+}
+
+model Block {
+  id        String   @id @default(cuid())
+  pageId    String
+  page      Page     @relation("PageBlocks", fields: [pageId], references: [id])
+  parentId  String?
+  order     Int
+  type      BlockType
+  text      String   @default("")
+  props     Json?
+  collapsed Boolean  @default(false)
+
+  children  Block[]  @relation("BlockChildren")
+  parent    Block?   @relation("BlockChildren", fields: [parentId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([pageId, parentId, order])
+}
+

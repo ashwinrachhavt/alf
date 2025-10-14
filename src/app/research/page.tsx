@@ -1,9 +1,7 @@
 "use client";
 
-import { useMemo, useRef, useState, useEffect } from "react";
+import { useMemo, useRef, useState } from "react";
 import { markdownToHtml } from "@/lib/markdown";
-import { supabase } from "@/lib/supabase";
-import { toast } from "sonner";
 import ResponsiveMarkdown from "@/components/ResponsiveMarkdown";
 
 export default function ResearchStreamPage() {
@@ -13,9 +11,6 @@ export default function ResearchStreamPage() {
   const [markdown, setMarkdown] = useState<string>("");
   const [running, setRunning] = useState(false);
   const [logs, setLogs] = useState<{ type: string; message: string }[]>([]);
-  const [saving, setSaving] = useState(false);
-  const [noteTitle, setNoteTitle] = useState("");
-  const [tags, setTags] = useState("");
   const abortRef = useRef<AbortController | null>(null);
 
   const html = useMemo(() => markdownToHtml(markdown), [markdown]);
@@ -99,68 +94,9 @@ export default function ResearchStreamPage() {
     abortRef.current?.abort();
   }
 
-  async function saveToSupabase() {
-    if (!markdown.trim()) {
-      toast.error("No content to save");
-      return;
-    }
-
-    setSaving(true);
-    try {
-      const title = noteTitle.trim() || generateTitle(query);
-      const tagArray = tags.split(',').map(t => t.trim()).filter(Boolean);
-
-      const { data, error } = await supabase
-        .from('research_notes')
-        .insert({
-          title,
-          content: markdown,
-          tags: tagArray,
-          query: query
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      toast.success("Research note saved successfully!");
-      setNoteTitle("");
-      setTags("");
-      setLogs((l) => [...l, { type: "status", message: `saved to Supabase: ${title}` }]);
-    } catch (err) {
-      console.error('Error saving note:', err);
-      toast.error("Failed to save note");
-      setLogs((l) => [...l, { type: "error", message: "Failed to save to Supabase" }]);
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  async function saveToKB() {
-    const name = suggestPath(query);
-    const path = prompt("Save to (relative path under content/):", name);
-    if (!path) return;
-    await fetch("/api/kb/doc", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ path, text: markdown }),
-    });
-    setLogs((l) => [...l, { type: "status", message: `saved:${path}` }]);
-  }
-
   function copyMd() {
     navigator.clipboard.writeText(markdown);
     setLogs((l) => [...l, { type: "status", message: "copied markdown" }]);
-  }
-
-  function generateTitle(q: string): string {
-    const cleaned = q.trim().slice(0, 80);
-    return cleaned || `Research - ${new Date().toLocaleDateString()}`;
-  }
-
-  function suggestPath(q: string) {
-    const slug = q.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60) || "research";
-    return `research/${slug}.md`;
   }
 
   return (
@@ -187,46 +123,7 @@ export default function ResearchStreamPage() {
           <ResponsiveMarkdown content={markdown} />
         </div>
         <aside className="border rounded-lg p-4 h-full min-h-[60vh] bg-background/30">
-          {/* Save Controls */}
-          {markdown && (
-            <div className="mb-4 p-3 border rounded-lg bg-background/50">
-              <div className="text-sm font-medium mb-2">Save Research</div>
-              <div className="space-y-2">
-                <input
-                  type="text"
-                  placeholder="Note title..."
-                  value={noteTitle}
-                  onChange={(e) => setNoteTitle(e.target.value)}
-                  className="w-full px-2 py-1 text-xs border rounded bg-background"
-                />
-                <input
-                  type="text"
-                  placeholder="Tags (comma separated)"
-                  value={tags}
-                  onChange={(e) => setTags(e.target.value)}
-                  className="w-full px-2 py-1 text-xs border rounded bg-background"
-                />
-                <div className="flex gap-1">
-                  <button 
-                    onClick={saveToSupabase} 
-                    disabled={saving} 
-                    className="flex-1 h-7 px-2 text-xs rounded border hover:bg-accent/60 disabled:opacity-50 bg-background"
-                  >
-                    {saving ? "Saving..." : "💾 Supabase"}
-                  </button>
-                  <button 
-                    onClick={saveToKB} 
-                    disabled={!markdown} 
-                    className="flex-1 h-7 px-2 text-xs rounded border hover:bg-accent/60 disabled:opacity-50 bg-background"
-                  >
-                    📚 KB
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Action Buttons */}
+          {/* Actions */}
           <div className="flex items-center gap-2 mb-3">
             <button onClick={copyMd} disabled={!markdown} className="h-8 px-3 text-xs rounded-md border hover:bg-accent/60 disabled:opacity-50 bg-background">
               📋 Copy
@@ -251,4 +148,3 @@ export default function ResearchStreamPage() {
     </div>
   );
 }
-
