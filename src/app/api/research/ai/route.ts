@@ -147,7 +147,7 @@ Output format:
       },
     });
 
-    return result.toTextStreamResponse();
+    return result.toUIMessageStreamResponse();
   } catch (e: any) {
     return new Response(JSON.stringify({ error: e?.message || "Internal error" }), {
       status: 500,

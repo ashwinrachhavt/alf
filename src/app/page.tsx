@@ -2,16 +2,17 @@ import Link from "next/link";
 import { Search, FileText, Sparkles, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import DocumentGrid3D from "@/components/DocumentGrid3D";
 
 export default function Home() {
   return (
-    <div className="mx-auto max-w-7xl px-4 py-12 space-y-16">
+    <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12 space-y-10">
       {/* Hero Section */}
       <section className="relative">
-        <Card className="relative overflow-hidden border-neutral-200/70 dark:border-neutral-800/70">
-          <CardContent className="p-8 md:p-12">
+        <Card className="relative overflow-hidden rounded-3xl bg-[color:var(--color-surface)]/90 dark:bg-[color:var(--color-surface)]/90 backdrop-blur border border-[color:var(--color-border)]/60 shadow-lg">
+          <CardContent className="p-8 md:p-10">
             <div className="relative z-10 max-w-3xl">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-xs font-medium mb-6">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-xs font-medium mb-6 text-[color:var(--color-foreground)]">
                 <Sparkles className="w-3 h-3" />
                 AI-Powered Research Platform
               </div>
@@ -22,8 +23,13 @@ export default function Home() {
                 For today’s knowledge workers: plans research, searches the web, extracts quotes with citations, and helps you re-find what matters.
               </p>
               <div className="flex flex-col sm:flex-row gap-3">
-                <Button asChild variant="primary" size="lg">
-                  <Link href="/research">
+                <Button
+                  asChild
+                  variant="primary"
+                  size="lg"
+                  className="shadow-md hover:shadow-lg transition-shadow ring-1 ring-black/10 dark:ring-white/20"
+                >
+                  <Link href="/research" className="inline-flex items-center">
                     <Search className="w-4 h-4 mr-2" />
                     Start Research
                   </Link>
@@ -45,59 +51,17 @@ export default function Home() {
         </Card>
       </section>
 
-      {/* Features */}
+      {/* 3D Document Grid Visualization */}
       <section>
-        <div className="text-center mb-10">
+        <div className="text-center mb-6">
           <h2 className="text-2xl md:text-3xl font-bold mb-3 text-neutral-900 dark:text-neutral-100">
-            Powerful Research Features
+            Your Knowledge, Visualized
           </h2>
           <p className="text-neutral-600 dark:text-neutral-400 max-w-2xl mx-auto">
-            Everything you need to conduct deep research and organize your knowledge effectively
+            Experience your research documents in an immersive 3D space
           </p>
         </div>
-        <div className="grid gap-6 md:grid-cols-3">
-          <Card className="group hover:shadow-lg transition-shadow">
-            <CardHeader>
-              <div className="w-12 h-12 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center mb-4">
-                <Search className="w-6 h-6 text-neutral-900 dark:text-neutral-100" />
-              </div>
-              <CardTitle className="text-lg">Grounded Research</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <CardDescription className="text-sm">
-                Live web search with quotes, URLs, and dates. All information is sourced and verifiable.
-              </CardDescription>
-            </CardContent>
-          </Card>
-
-          <Card className="group hover:shadow-lg transition-shadow">
-            <CardHeader>
-              <div className="w-12 h-12 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center mb-4">
-                <FileText className="w-6 h-6 text-neutral-900 dark:text-neutral-100" />
-              </div>
-              <CardTitle className="text-lg">Nurtured Notes</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <CardDescription className="text-sm">
-                Stream results in real-time, then refine and organize in the rich text editor.
-              </CardDescription>
-            </CardContent>
-          </Card>
-
-          <Card className="group hover:shadow-lg transition-shadow">
-            <CardHeader>
-              <div className="w-12 h-12 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center mb-4">
-                <Sparkles className="w-6 h-6 text-neutral-900 dark:text-neutral-100" />
-              </div>
-              <CardTitle className="text-lg">Minimal Aesthetic</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <CardDescription className="text-sm">
-                Clean black & white design with subtle shadows and seamless light/dark modes.
-              </CardDescription>
-            </CardContent>
-          </Card>
-        </div>
+        <DocumentGrid3D />
       </section>
 
       {/* CTA Section */}

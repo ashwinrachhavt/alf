@@ -1,13 +1,13 @@
 @import "tailwindcss";
 
 @theme {
-  /* Light mode - improved contrast */
-  --color-background: #ffffff;
-  --color-foreground: #0a0a0a;
-  --color-surface: #fafafa;
-  --color-border: #e5e5e5;
-  --color-accent: #f4f4f5;
-  --color-muted: #737373;
+  /* Light mode - improved contrast per DESIGN_SYSTEM.md */
+  --color-background: #ffffff; /* white */
+  --color-foreground: #0a0a0a; /* near-black text */
+  --color-surface: #fafafa; /* subtle gray surfaces */
+  --color-border: #e5e5e5; /* light borders */
+  --color-accent: #f4f4f5; /* hover/active */
+  --color-muted: #737373; /* secondary text */
 
   /* Shadows */
   --shadow-subtle: 0 1px 2px 0 rgb(0 0 0 / 0.05);
@@ -42,6 +42,15 @@ html.dark {
     color: var(--color-foreground);
     transition: color 0.2s ease-in-out;
   }
+
+  /* Ensure light theme components have proper contrast */
+  :root .card,
+  :root .surface {
+    background: var(--color-surface);
+  }
+
+  /* Ensure SVG icons inherit readable color in dark mode */
+  svg { color: currentColor; }
 
   /* Remove default button/input styles to let components handle them */
   button:focus-visible,
