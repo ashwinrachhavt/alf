@@ -1,10 +1,9 @@
 "use client";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Link from "@tiptap/extension-link";
 import Placeholder from "@tiptap/extension-placeholder";
-import History from "@tiptap/extension-history";
 import { unified } from "unified";
 import remarkParse from "remark-parse";
 import remarkStringify from "remark-stringify";
@@ -37,14 +36,16 @@ type Props = {
 };
 
 export default function NoteWysiwyg({ initialMarkdown, onChangeMarkdown }: Props) {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
   const initialHtmlRef = useRef<string>("");
 
   const editor = useEditor({
+    immediatelyRender: false,
     extensions: [
       StarterKit.configure({ codeBlock: true, heading: { levels: [1, 2, 3] } }),
       Link.configure({ openOnClick: false, autolink: true, HTMLAttributes: { rel: "noreferrer noopener" } }),
       Placeholder.configure({ placeholder: "Write your note…" }),
-      History.configure({ depth: 200 }),
     ],
     content: initialHtmlRef.current,
     editorProps: {
@@ -71,8 +72,6 @@ export default function NoteWysiwyg({ initialMarkdown, onChangeMarkdown }: Props
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialMarkdown]);
-
-  if (!editor) return null;
 
   return (
     <div>
@@ -116,9 +115,8 @@ export default function NoteWysiwyg({ initialMarkdown, onChangeMarkdown }: Props
       </div>
 
       <div className="rounded-3xl bg-[color:var(--color-surface)]/90 border border-[color:var(--color-border)]/60 shadow-lg p-4 sm:p-6 lg:p-8 min-h-[60vh]">
-        <EditorContent editor={editor} />
+        {mounted && editor ? <EditorContent editor={editor} /> : <div className="min-h-[40vh]" />}
       </div>
     </div>
   );
 }
-
