@@ -31,23 +31,25 @@ async function htmlToMarkdown(html: string): Promise<string> {
 }
 
 type Props = {
-  initialMarkdown: string;
+  initialMarkdown?: string;
+  initialContent?: any; // Tiptap JSON
   onChangeMarkdown: (md: string) => void;
+  onChangeContent?: (content: any) => void;
 };
 
-export default function NoteWysiwyg({ initialMarkdown, onChangeMarkdown }: Props) {
+export default function NoteWysiwyg({ initialMarkdown, initialContent, onChangeMarkdown, onChangeContent }: Props) {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
-  const initialHtmlRef = useRef<string>("");
+  const initializedRef = useRef(false);
 
   const editor = useEditor({
     immediatelyRender: false,
     extensions: [
-      StarterKit.configure({ codeBlock: true, heading: { levels: [1, 2, 3] } }),
+      StarterKit,
       Link.configure({ openOnClick: false, autolink: true, HTMLAttributes: { rel: "noreferrer noopener" } }),
       Placeholder.configure({ placeholder: "Write your note…" }),
     ],
-    content: initialHtmlRef.current,
+    content: "",
     editorProps: {
       attributes: {
         class:
@@ -57,55 +59,63 @@ export default function NoteWysiwyg({ initialMarkdown, onChangeMarkdown }: Props
     onUpdate: async ({ editor }) => {
       const html = editor.getHTML();
       const md = await htmlToMarkdown(html);
+      const json = editor.getJSON();
       onChangeMarkdown(md);
+      onChangeContent?.(json);
     },
   });
 
-  // Initialize from markdown → HTML once
+  // Initialize from Tiptap JSON or markdown
   useEffect(() => {
+    if (!editor || initializedRef.current) return;
+
     (async () => {
-      const html = await markdownToHtml(initialMarkdown || "");
-      initialHtmlRef.current = html;
-      if (editor && editor.isEmpty) {
-        editor.commands.setContent(html, false, { preserveWhitespace: "full" });
+      if (initialContent) {
+        // Use Tiptap JSON content directly
+        editor.commands.setContent(initialContent);
+        initializedRef.current = true;
+      } else if (initialMarkdown) {
+        // Convert markdown to HTML first
+        const html = await markdownToHtml(initialMarkdown);
+        editor.commands.setContent(html);
+        initializedRef.current = true;
       }
     })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialMarkdown]);
+  }, [editor, initialMarkdown, initialContent]);
 
   return (
     <div>
       {/* Simple toolbar */}
       <div className="mb-2 flex flex-wrap gap-1 text-sm">
-        <button className="px-2 py-1 rounded border" onClick={() => editor.chain().focus().toggleBold().run()} aria-label="Bold">
+        <button className="px-2 py-1 rounded border" onClick={() => editor?.chain().focus().toggleBold().run()} aria-label="Bold">
           B
         </button>
-        <button className="px-2 py-1 rounded border" onClick={() => editor.chain().focus().toggleItalic().run()} aria-label="Italic">
+        <button className="px-2 py-1 rounded border" onClick={() => editor?.chain().focus().toggleItalic().run()} aria-label="Italic">
           I
         </button>
-        <button className="px-2 py-1 rounded border" onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()} aria-label="H1">
+        <button className="px-2 py-1 rounded border" onClick={() => editor?.chain().focus().toggleHeading({ level: 1 }).run()} aria-label="H1">
           H1
         </button>
-        <button className="px-2 py-1 rounded border" onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()} aria-label="H2">
+        <button className="px-2 py-1 rounded border" onClick={() => editor?.chain().focus().toggleHeading({ level: 2 }).run()} aria-label="H2">
           H2
         </button>
-        <button className="px-2 py-1 rounded border" onClick={() => editor.chain().focus().toggleBulletList().run()} aria-label="Bulleted list">
+        <button className="px-2 py-1 rounded border" onClick={() => editor?.chain().focus().toggleBulletList().run()} aria-label="Bulleted list">
           • List
         </button>
-        <button className="px-2 py-1 rounded border" onClick={() => editor.chain().focus().toggleOrderedList().run()} aria-label="Numbered list">
+        <button className="px-2 py-1 rounded border" onClick={() => editor?.chain().focus().toggleOrderedList().run()} aria-label="Numbered list">
           1. List
         </button>
-        <button className="px-2 py-1 rounded border" onClick={() => editor.chain().focus().toggleBlockquote().run()} aria-label="Quote">
-          “ ”
+        <button className="px-2 py-1 rounded border" onClick={() => editor?.chain().focus().toggleBlockquote().run()} aria-label="Quote">
+          " "
         </button>
-        <button className="px-2 py-1 rounded border" onClick={() => editor.chain().focus().toggleCodeBlock().run()} aria-label="Code block">
+        <button className="px-2 py-1 rounded border" onClick={() => editor?.chain().focus().toggleCodeBlock().run()} aria-label="Code block">
           {'</>'}
         </button>
         <button
           className="px-2 py-1 rounded border"
           onClick={() => {
             const url = prompt("Enter URL");
-            if (!url) return;
+            if (!url || !editor) return;
             editor.chain().focus().setLink({ href: url }).run();
           }}
           aria-label="Link"

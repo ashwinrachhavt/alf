@@ -5,6 +5,7 @@ import {
   type UIMessage,
   stepCountIs,
 } from 'ai';
+import { z } from 'zod';
 import { registerFirecrawl } from '@/lib/tools/firecrawl';
 import { tool as aiTool } from 'ai';
 import { registerTool } from '@/lib/tools';
@@ -56,7 +57,10 @@ export async function POST(req: Request) {
   const firecrawlTools = {
     firecrawl_search: aiTool({
       description: 'Firecrawl: web search',
-      inputSchema: safeSchema as any,
+      inputSchema: z.object({
+        query: z.string().describe('Firecrawl search query'),
+        maxResults: z.number().int().min(1).max(10).optional(),
+      }),
       async execute(args: unknown) {
         const mod = await import('@/lib/tools');
         const t = mod.getTool<any, any>('firecrawl_search');
@@ -66,7 +70,9 @@ export async function POST(req: Request) {
     }),
     firecrawl_crawl: aiTool({
       description: 'Firecrawl: crawl URL(s) to structured content',
-      inputSchema: safeSchema as any,
+      inputSchema: z.object({
+        urls: z.array(z.string().url()).describe('List of target URLs to crawl'),
+      }),
       async execute(args: unknown) {
         const mod = await import('@/lib/tools');
         const t = mod.getTool<any, any>('firecrawl_crawl');
@@ -76,7 +82,9 @@ export async function POST(req: Request) {
     }),
     firecrawl_extract: aiTool({
       description: 'Firecrawl: extract fields/quotes from content',
-      inputSchema: safeSchema as any,
+      inputSchema: z.object({
+        content: z.string().describe('Raw HTML or textual content to extract data from'),
+      }),
       async execute(args: unknown) {
         const mod = await import('@/lib/tools');
         const t = mod.getTool<any, any>('firecrawl_extract');

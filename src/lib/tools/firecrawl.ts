@@ -43,7 +43,13 @@ export const firecrawlExtract = defineTool({
 });
 
 export function registerFirecrawl(register: (t: any) => void) {
+  // Register both dot and underscore forms for compatibility
   register(firecrawlSearch);
   register(firecrawlScrape);
   register(firecrawlExtract);
+
+  // underscore alias set for Firecrawl test endpoint compatibility
+  register({ ...firecrawlSearch, name: 'firecrawl_search' });
+  register({ ...firecrawlScrape, name: 'firecrawl_crawl' });
+  register({ ...firecrawlExtract, name: 'firecrawl_extract' });
 }

@@ -9,6 +9,7 @@ type Note = {
   id: string;
   title: string;
   icon?: string | null;
+  content?: any; // Tiptap JSON
   contentMd?: string | null;
   tags?: string[];
   category?: string | null;
@@ -24,6 +25,7 @@ export default function NoteEditorPage() {
   const [note, setNote] = useState<Note | null>(null);
   const [title, setTitle] = useState("");
   const [markdown, setMarkdown] = useState("");
+  const [tiptapContent, setTiptapContent] = useState<any>(null);
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState<string>("");
 
@@ -38,6 +40,10 @@ export default function NoteEditorPage() {
         if (n) {
           setNote(n);
           setTitle(n.title || "Untitled Note");
+          // Prefer Tiptap JSON content if available, otherwise fall back to markdown
+          if (n.content) {
+            setTiptapContent(n.content);
+          }
           setMarkdown(n.contentMd || "");
         }
       } catch {}
@@ -52,7 +58,11 @@ export default function NoteEditorPage() {
       const res = await fetch(`/api/notes/${noteId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title, contentMd: markdown }),
+        body: JSON.stringify({
+          title,
+          contentMd: markdown,
+          content: tiptapContent, // Save the Tiptap JSON content
+        }),
       }).then((r) => r.json());
       if (res?.success) {
         setStatus("Saved");
@@ -103,7 +113,9 @@ export default function NoteEditorPage() {
       <div className="flex-1 min-h-0 py-4">
         <NoteWysiwyg
           initialMarkdown={markdown}
+          initialContent={tiptapContent}
           onChangeMarkdown={(md) => setMarkdown(md)}
+          onChangeContent={(content) => setTiptapContent(content)}
         />
       </div>
     </div>

@@ -10,17 +10,26 @@ export const duckDuckGoInstant = defineTool({
   }),
   async execute({ query }) {
     const url = `https://api.duckduckgo.com/?q=${encodeURIComponent(query)}&format=json&no_redirect=1&no_html=1`;
-    const res = await fetch(url);
-    if (!res.ok) throw new Error(`ddg instant ${res.status}`);
-    const json = await res.json();
-    return {
-      heading: json.Heading,
-      abstract: json.AbstractText,
-      url: json.AbstractURL || json.Redirect,
-      related: (json.RelatedTopics || []).slice(0, 10).map((t: any) => ({
-        text: t.Text ?? t?.Name,
-        url: t.FirstURL ?? t?.Topics?.[0]?.FirstURL,
-      })),
-    };
+    try {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`DuckDuckGo instant error: ${res.status}`);
+      const txt = await res.text();
+      if (!txt) throw new Error("Empty response from DuckDuckGo");
+      const json = JSON.parse(txt);
+      return {
+        heading: json?.Heading || "",
+        abstract: json?.AbstractText || "",
+        url: json?.AbstractURL || json?.Redirect || "",
+        related: Array.isArray(json?.RelatedTopics)
+          ? json.RelatedTopics.slice(0, 10).map((t: any) => ({
+              text: t?.Text ?? t?.Name ?? "",
+              url: t?.FirstURL ?? t?.Topics?.[0]?.FirstURL ?? "",
+            }))
+          : [],
+      };
+    } catch (err: any) {
+      console.error("❌ DuckDuckGo fetch failed:", err.message);
+      return { heading: "", abstract: "", url: "", related: [] };
+    }
   },
 });

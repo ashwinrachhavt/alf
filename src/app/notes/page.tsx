@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Plus, Search, Star, Archive, Tag, Folder, Clock, Sparkles } from "lucide-react";
+import { Plus, Search, Star, Archive, Tag, Folder, Clock, Sparkles, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -68,6 +68,28 @@ export default function NotesPage() {
       }
     } catch (error) {
       console.error("Failed to create note:", error);
+    }
+  }
+
+  async function deleteNote(noteId: string, event: React.MouseEvent) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    if (!confirm("Are you sure you want to delete this note?")) {
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/notes/${noteId}`, {
+        method: "DELETE",
+      });
+      const data = await res.json();
+      if (data.success) {
+        // Reload notes after deletion
+        await loadNotes();
+      }
+    } catch (error) {
+      console.error("Failed to delete note:", error);
     }
   }
 
@@ -168,30 +190,31 @@ export default function NotesPage() {
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {filteredNotes.map((note) => (
-            <Link key={note.id} href={`/notes/${note.id}` as any}>
-              <Card className="group hover:shadow-lg transition-all cursor-pointer h-full">
-                {note.coverUrl && (
-                  <div className="aspect-video w-full overflow-hidden rounded-t-xl">
-                    <img
-                      src={note.coverUrl}
-                      alt={note.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                    />
-                  </div>
-                )}
-                <CardHeader>
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex items-center gap-2 flex-1 min-w-0">
-                      <span className="text-2xl">{note.icon || "📝"}</span>
-                      <CardTitle className="text-base truncate">
-                        {note.title}
-                      </CardTitle>
+            <div key={note.id} className="relative group">
+              <Link href={`/notes/${note.id}` as any}>
+                <Card className="hover:shadow-lg transition-all cursor-pointer h-full">
+                  {note.coverUrl && (
+                    <div className="aspect-video w-full overflow-hidden rounded-t-xl">
+                      <img
+                        src={note.coverUrl}
+                        alt={note.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                      />
                     </div>
-                    {note.isFavorite && (
-                      <Star className="w-4 h-4 fill-yellow-400 text-yellow-400 flex-shrink-0" />
-                    )}
-                  </div>
-                </CardHeader>
+                  )}
+                  <CardHeader>
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                        <span className="text-2xl">{note.icon || "📝"}</span>
+                        <CardTitle className="text-base truncate">
+                          {note.title}
+                        </CardTitle>
+                      </div>
+                      {note.isFavorite && (
+                        <Star className="w-4 h-4 fill-yellow-400 text-yellow-400 flex-shrink-0" />
+                      )}
+                    </div>
+                  </CardHeader>
                 <CardContent className="space-y-3">
                   {/* Tags */}
                   {note.tags.length > 0 && (
@@ -227,6 +250,14 @@ export default function NotesPage() {
                 </CardContent>
               </Card>
             </Link>
+            <button
+              onClick={(e) => deleteNote(note.id, e)}
+              className="absolute top-2 right-2 p-2 rounded-lg bg-red-500 text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600 z-10"
+              aria-label="Delete note"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          </div>
           ))}
         </div>
       )}

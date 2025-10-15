@@ -13,24 +13,22 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
+import { generateJSON } from "@tiptap/core";
+import StarterKit from "@tiptap/starter-kit";
+import Link from "@tiptap/extension-link";
 
 export default function ResearchStreamPage() {
   const router = useRouter();
-  const [query, setQuery] = useState(
-    "Do a deep research on the company Maxima AI, I had a recruiter screen with them and going to have an initial coding round where they're going to check problem solving (not LeetCode, but practical coding). Help me prepare: propose practice questions with solved examples. Finally, include a simple DB schema design with indexing."
-  );
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
-  const [fcUrl, setFcUrl] = useState<string>("");
-  const [fcStatus, setFcStatus] = useState<'unknown' | 'online' | 'offline'>('unknown');
+  const [input, setInput] = useState("");
 
   const { messages, sendMessage, stop, status } = useChat({
     transport: new DefaultChatTransport({
-      api: "/api/research",
+      api: "/api/tests/test3",
     }),
   });
   const isLoading = status === 'submitted' || status === 'streaming';
-  const [input, setInput] = useState("");
 
   const lastMessage = messages[messages.length - 1];
   const markdown = lastMessage?.role === 'assistant'
@@ -48,16 +46,31 @@ export default function ResearchStreamPage() {
     setSaving(true);
     setSaved(false);
     try {
-      let title = query.slice(0, 100).trim();
+      // Get the title from the user input or markdown heading
+      const lastUserMessage = messages.filter(m => m.role === 'user').pop();
+      const userQuery = lastUserMessage?.parts
+        .filter((p: any) => p.type === 'text')
+        .map((p: any) => p.text)
+        .join(' ') || '';
+
+      let title = userQuery.slice(0, 100).trim() || "Research Note";
       const titleMatch = markdown.match(/^#\s+(.+)$/m);
       if (titleMatch?.[1]) title = titleMatch[1].slice(0, 100);
+
+      // Convert markdown to HTML, then to Tiptap JSON
+      const htmlContent = await markdownToHtml(markdown);
+      const tiptapContent = generateJSON(htmlContent, [
+        StarterKit,
+        Link,
+      ]);
 
       const res = await fetch('/api/notes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           title,
-          contentMd: markdown,
+          content: tiptapContent, // Tiptap JSON format
+          contentMd: markdown,     // Also keep markdown for backup
           tags: ['research'],
           category: 'Research',
         }),
@@ -68,7 +81,7 @@ export default function ResearchStreamPage() {
       setSaved(true);
       setTimeout(() => router.push(`/notes/${noteId}` as any), 800);
     } catch (e) {
-      // log error
+      console.error('Failed to save note:', e);
     } finally {
       setSaving(false);
     }
