@@ -25,7 +25,7 @@ export default function ResearchStreamPage() {
 
   const { messages, sendMessage, stop, status } = useChat({
     transport: new DefaultChatTransport({
-      api: "/api/tests/test3",
+      api: "/api/tests/test4",
     }),
   });
   const isLoading = status === 'submitted' || status === 'streaming';
