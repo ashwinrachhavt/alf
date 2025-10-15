@@ -12,7 +12,11 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <ClerkProvider>
+    <ClerkProvider
+      appearance={{
+        elements: { rootBox: 'z-[10]' },
+      }}
+    >
       <html lang="en" suppressHydrationWarning>
         <body className="antialiased">
           <ThemeProvider attribute="class" defaultTheme="light" enableSystem>

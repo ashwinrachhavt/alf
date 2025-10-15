@@ -95,6 +95,49 @@ export async function PUT(
     );
   }
 }
+// PATCH /api/notes/[id] - Partial update
+export async function PATCH(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    const body = await request.json();
+    const {
+      title,
+      icon,
+      coverUrl,
+      content,
+      contentMd,
+      tags,
+      category,
+      isFavorite,
+      isArchived,
+    } = body;
+
+    const note = await prisma.note.update({
+      where: { id },
+      data: {
+        ...(title !== undefined && { title }),
+        ...(icon !== undefined && { icon }),
+        ...(coverUrl !== undefined && { coverUrl }),
+        ...(content !== undefined && { content }),
+        ...(contentMd !== undefined && { contentMd }),
+        ...(tags !== undefined && { tags }),
+        ...(category !== undefined && { category }),
+        ...(isFavorite !== undefined && { isFavorite }),
+        ...(isArchived !== undefined && { isArchived }),
+      },
+    });
+
+    return NextResponse.json({ success: true, data: note });
+  } catch (error: any) {
+    return NextResponse.json(
+      { success: false, error: error.message },
+      { status: 500 }
+    );
+  }
+}
 
 // DELETE /api/notes/[id] - Delete note
 export async function DELETE(

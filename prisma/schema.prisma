@@ -70,34 +70,13 @@ model Block {
   @@index([pageId, parentId, order])
 }
 
-// Research threads with markdown runs (Tiptap JSON optional)
-model ResearchThread {
-  id        String        @id @default(cuid())
-  title     String        @default("Untitled Thread")
-  runs      ResearchRun[]
-  createdAt DateTime      @default(now())
-  updatedAt DateTime      @updatedAt
-}
-
-model ResearchRun {
-  id         String         @id @default(cuid())
-  threadId   String
-  thread     ResearchThread @relation(fields: [threadId], references: [id])
-  title      String?        @default("")
-  contentMd  String         @db.Text
-  contentDoc Json?
-  createdAt  DateTime       @default(now())
-  updatedAt  DateTime       @updatedAt
-  sources    ResearchSource[]
-
-  @@index([threadId, updatedAt])
-}
+// Removed threads/runs models
 
 // Per-URL artifacts and optional quotes captured during research
 model ResearchSource {
   id          String       @id @default(cuid())
-  runId       String
-  run         ResearchRun  @relation(fields: [runId], references: [id], onDelete: Cascade)
+  runId       String?
+  // run removed with threads; keep nullable foreign-style field for legacy data
   url         String
   title       String?
   author      String?

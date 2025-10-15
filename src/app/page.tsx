@@ -25,21 +25,16 @@ export default function Home() {
               <div className="flex flex-col sm:flex-row gap-3">
                 <Button
                   asChild
-                  variant="primary"
-                  size="lg"
-                  className="shadow-md hover:shadow-lg transition-shadow ring-1 ring-black/10 dark:ring-white/20"
+                  variant="secondary"
+                  size="sm"
+                  className="shadow-md hover:shadow-lg transition-shadow ring-1 ring-black/10 text-neutral-900 dark:bg-neutral-900 dark:text-white dark:hover:bg-neutral-800 dark:ring-neutral-700"
                 >
                   <Link href="/research" className="inline-flex items-center">
                     <Search className="w-4 h-4 mr-2" />
                     Start Research
                   </Link>
                 </Button>
-                <Button asChild variant="secondary" size="lg">
-                  <Link href="/threads">
-                    <FileText className="w-4 h-4 mr-2" />
-                    View Threads
-                  </Link>
-                </Button>
+                
               </div>
             </div>
             {/* Background decoration */}
@@ -64,25 +59,6 @@ export default function Home() {
         <DocumentGrid3D />
       </section>
 
-      {/* CTA Section */}
-      <section>
-        <Card className="bg-gradient-to-br from-neutral-50 to-neutral-100 dark:from-neutral-900 dark:to-neutral-800 border-neutral-200/70 dark:border-neutral-700/70">
-          <CardContent className="p-8 md:p-12 text-center">
-            <h2 className="text-2xl md:text-3xl font-bold mb-3 text-neutral-900 dark:text-neutral-100">
-              Ready to start researching?
-            </h2>
-            <p className="text-neutral-600 dark:text-neutral-400 mb-6 max-w-xl mx-auto">
-              Create your first research thread and let AI help you gather, organize, and understand information.
-            </p>
-            <Button asChild variant="primary" size="lg">
-              <Link href="/research">
-                Get Started
-                <ArrowRight className="w-4 h-4 ml-2" />
-              </Link>
-            </Button>
-          </CardContent>
-        </Card>
-      </section>
     </div>
   );
 }
