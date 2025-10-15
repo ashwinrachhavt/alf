@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { markdownToHtml } from "@/lib/markdown";
 import ResponsiveMarkdown from "@/components/ResponsiveMarkdown";
 import { useRouter } from "next/navigation";
-import { MessageSquare, Copy, Save, Search as SearchIcon } from "lucide-react";
+import { MessageSquare, Copy, Save, Search as SearchIcon, Network } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -16,12 +16,24 @@ import { DefaultChatTransport } from "ai";
 import { generateJSON } from "@tiptap/core";
 import StarterKit from "@tiptap/starter-kit";
 import Link from "@tiptap/extension-link";
+import dynamic from "next/dynamic";
+import { extractKnowledgeGraph } from "@/lib/extractKnowledgeGraph";
+
+const KnowledgeGraph3D = dynamic(() => import("@/components/KnowledgeGraph3D"), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full h-full flex items-center justify-center bg-black rounded-xl">
+      <div className="text-neutral-500 text-sm">Loading 3D visualization...</div>
+    </div>
+  ),
+});
 
 export default function ResearchStreamPage() {
   const router = useRouter();
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [input, setInput] = useState("");
+  const [showGraph, setShowGraph] = useState(true);
 
   const { messages, sendMessage, stop, status } = useChat({
     transport: new DefaultChatTransport({
@@ -36,6 +48,11 @@ export default function ResearchStreamPage() {
     : '';
 
   const html = useMemo(() => markdownToHtml(markdown), [markdown]);
+
+  // Extract knowledge graph from markdown
+  const knowledgeGraph = useMemo(() => {
+    return extractKnowledgeGraph(markdown);
+  }, [markdown]);
 
   function copyMd() {
     navigator.clipboard.writeText(markdown);
@@ -137,6 +154,43 @@ export default function ResearchStreamPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Knowledge Graph Visualization */}
+      {markdown && knowledgeGraph.nodes.length > 0 && (
+        <Card className="overflow-hidden">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Network className="w-4 h-4" />
+                <CardTitle className="text-base">Knowledge Graph</CardTitle>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowGraph(!showGraph)}
+              >
+                {showGraph ? "Hide" : "Show"}
+              </Button>
+            </div>
+            <CardDescription>
+              Interactive 3D visualization of research entities and relationships
+            </CardDescription>
+          </CardHeader>
+          {showGraph && (
+            <CardContent className="p-0">
+              <div className="w-full h-[500px]">
+                <KnowledgeGraph3D
+                  nodes={knowledgeGraph.nodes}
+                  edges={knowledgeGraph.edges}
+                  onNodeClick={(node) => {
+                    console.log("Node clicked:", node);
+                  }}
+                />
+              </div>
+            </CardContent>
+          )}
+        </Card>
+      )}
 
       <div className="grid lg:grid-cols-[1fr_340px] gap-6">
         <Card className="min-h-[60vh]">
