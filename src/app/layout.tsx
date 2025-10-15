@@ -11,24 +11,36 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <ClerkProvider
-      appearance={{
-        elements: { rootBox: 'z-[10]' },
-      }}
-    >
-      <html lang="en" suppressHydrationWarning>
-        <body className="antialiased">
-          <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
-            <Nav />
-            <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6">{children}</main>
-            {process.env.NODE_ENV === 'development' && (
-              <style>{`.cl-bannertoast, .cl-component-bannertoast { display: none !important; }`}</style>
-            )}
-            <Toaster richColors position="top-right" />
-          </ThemeProvider>
-        </body>
-      </html>
-    </ClerkProvider>
+  // Check if Clerk is configured
+  const hasClerkKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
+
+  const content = (
+    <html lang="en" suppressHydrationWarning>
+      <body className="antialiased">
+        <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
+          <Nav />
+          <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6">{children}</main>
+          {process.env.NODE_ENV === 'development' && (
+            <style>{`.cl-bannertoast, .cl-component-bannertoast { display: none !important; }`}</style>
+          )}
+          <Toaster richColors position="top-right" />
+        </ThemeProvider>
+      </body>
+    </html>
   );
+
+  // Only wrap with ClerkProvider if key exists
+  if (hasClerkKey) {
+    return (
+      <ClerkProvider
+        appearance={{
+          elements: { rootBox: 'z-[10]' },
+        }}
+      >
+        {content}
+      </ClerkProvider>
+    );
+  }
+
+  return content;
 }
