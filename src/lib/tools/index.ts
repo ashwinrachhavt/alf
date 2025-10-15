@@ -1,6 +1,5 @@
-// tools/index.ts
 import type { Tool } from './types';
-import { tool as aiTool } from 'ai';
+import { tool as aiTool, type Tool as AiTool } from 'ai';
 
 const registry = new Map<string, Tool<any, any>>();
 
@@ -16,18 +15,15 @@ export function listTools() {
   return Array.from(registry.keys());
 }
 
-// Adapter: expose tools to AI SDK `streamText`/`generateText`
 export function toAiSdkTools() {
   const out: Record<string, ReturnType<typeof aiTool>> = {};
   for (const [name, t] of registry) {
-    out[name] = aiTool({
+    const safeName = name.replace(/[^a-zA-Z0-9_-]/g, '_');
+    out[safeName] = aiTool<any, any>({
       description: t.description,
-      inputSchema: t.inputSchema,
-      // validate already done by AI SDK; call your tool
-      execute: async (args) => t.execute(args),
-      // Optional: if you want to stream/marshal outputs later,
-      // add `toModelOutput` here with `toModelOutput: t.toModelOutput`
-    });
+      inputSchema: t.inputSchema as unknown as ReturnType<typeof aiTool> extends AiTool<infer A, any> ? A : never,
+      execute: async (args: any) => t.execute(args),
+    }) as unknown as ReturnType<typeof aiTool>;
   }
   return out;
 }
