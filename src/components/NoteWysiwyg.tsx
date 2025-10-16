@@ -4,6 +4,9 @@ import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Link from "@tiptap/extension-link";
 import Placeholder from "@tiptap/extension-placeholder";
+import { AIPalette } from "./AIPalette";
+import { AiContextMenu } from "./AiContextMenu";
+import { Bold, Italic, List, ListOrdered, Quote, Code, Sparkles } from "lucide-react";
 import { unified } from "unified";
 import remarkParse from "remark-parse";
 import remarkStringify from "remark-stringify";
@@ -39,6 +42,8 @@ type Props = {
 
 export default function NoteWysiwyg({ initialMarkdown, initialContent, onChangeMarkdown, onChangeContent }: Props) {
   const [mounted, setMounted] = useState(false);
+  const [aiOpen, setAiOpen] = useState(false);
+  const lastSpaceRef = useRef<number>(0);
   useEffect(() => setMounted(true), []);
   const initializedRef = useRef(false);
 
@@ -47,13 +52,14 @@ export default function NoteWysiwyg({ initialMarkdown, initialContent, onChangeM
     extensions: [
       StarterKit,
       Link.configure({ openOnClick: false, autolink: true, HTMLAttributes: { rel: "noreferrer noopener" } }),
-      Placeholder.configure({ placeholder: "Write your note…" }),
+      Placeholder.configure({
+        placeholder: "Start writing... Select text for AI assistance or press ⌘J",
+      }),
     ],
     content: "",
     editorProps: {
       attributes: {
-        class:
-          "prose dark:prose-invert max-w-none focus:outline-none min-h-[40vh] text-[color:var(--color-foreground)]",
+        class: "tiptap",
       },
     },
     onUpdate: async ({ editor }) => {
@@ -83,50 +89,151 @@ export default function NoteWysiwyg({ initialMarkdown, initialContent, onChangeM
     })();
   }, [editor, initialMarkdown, initialContent]);
 
+  // Double-space AI trigger
+  useEffect(() => {
+    if (!editor) return;
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      // ⌘J or Ctrl+J to open AI palette
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "j") {
+        e.preventDefault();
+        setAiOpen(true);
+        return;
+      }
+
+      // Double-space detection in empty paragraph
+      if (e.key === " " && !e.shiftKey && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        const now = Date.now();
+        const interval = now - (lastSpaceRef.current || 0);
+        lastSpaceRef.current = now;
+
+        // Only trigger if cursor is in an empty paragraph
+        const isEmptyPara =
+          editor.isActive("paragraph") &&
+          editor.state.selection.$from.parent.content.size === 0;
+
+        if (isEmptyPara && interval < 300) {
+          e.preventDefault();
+          setAiOpen(true);
+        }
+      }
+    };
+
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [editor]);
+
+  // Handle AI completion
+  const handleAI = async (prompt: string, mode: "rewrite" | "continue" | "summarize") => {
+    if (!editor) return;
+
+    const html = editor.getHTML();
+    const selection = editor.state.doc.textBetween(
+      editor.state.selection.from,
+      editor.state.selection.to,
+      "\n\n"
+    );
+
+    const res = await fetch("/api/ai/complete", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ html, selection, prompt, mode }),
+    });
+
+    if (!res.ok) {
+      throw new Error(`AI request failed: ${res.statusText}`);
+    }
+
+    const { text } = await res.json();
+
+    // Insert or replace based on mode
+    if (mode === "rewrite" && selection) {
+      editor.chain().focus().deleteSelection().insertContent(text).run();
+    } else {
+      editor.chain().focus().insertContent(text).run();
+    }
+  };
+
+  const ToolbarButton = ({ active, onClick, icon: Icon, label }: any) => (
+    <button
+      className={`p-2 rounded-lg transition-colors ${
+        active
+          ? "bg-blue-500/10 text-blue-600 dark:text-blue-400"
+          : "hover:bg-[color:var(--color-accent)] text-[color:var(--color-muted)]"
+      }`}
+      onClick={onClick}
+      aria-label={label}
+      title={label}
+    >
+      <Icon className="w-4 h-4" />
+    </button>
+  );
+
   return (
-    <div>
-      {/* Simple toolbar */}
-      <div className="mb-2 flex flex-wrap gap-1 text-sm">
-        <button className="px-2 py-1 rounded border" onClick={() => editor?.chain().focus().toggleBold().run()} aria-label="Bold">
-          B
-        </button>
-        <button className="px-2 py-1 rounded border" onClick={() => editor?.chain().focus().toggleItalic().run()} aria-label="Italic">
-          I
-        </button>
-        <button className="px-2 py-1 rounded border" onClick={() => editor?.chain().focus().toggleHeading({ level: 1 }).run()} aria-label="H1">
-          H1
-        </button>
-        <button className="px-2 py-1 rounded border" onClick={() => editor?.chain().focus().toggleHeading({ level: 2 }).run()} aria-label="H2">
-          H2
-        </button>
-        <button className="px-2 py-1 rounded border" onClick={() => editor?.chain().focus().toggleBulletList().run()} aria-label="Bulleted list">
-          • List
-        </button>
-        <button className="px-2 py-1 rounded border" onClick={() => editor?.chain().focus().toggleOrderedList().run()} aria-label="Numbered list">
-          1. List
-        </button>
-        <button className="px-2 py-1 rounded border" onClick={() => editor?.chain().focus().toggleBlockquote().run()} aria-label="Quote">
-          " "
-        </button>
-        <button className="px-2 py-1 rounded border" onClick={() => editor?.chain().focus().toggleCodeBlock().run()} aria-label="Code block">
-          {'</>'}
-        </button>
-        <button
-          className="px-2 py-1 rounded border"
-          onClick={() => {
-            const url = prompt("Enter URL");
-            if (!url || !editor) return;
-            editor.chain().focus().setLink({ href: url }).run();
-          }}
-          aria-label="Link"
-        >
-          Link
-        </button>
+    <>
+      {/* Floating toolbar - minimal and clean */}
+      {mounted && editor && (
+        <div className="sticky top-16 z-10 mb-6 flex items-center gap-1 p-2 rounded-xl bg-[color:var(--color-surface)] border border-[color:var(--color-border)] shadow-sm w-fit">
+          <ToolbarButton
+            active={editor.isActive("bold")}
+            onClick={() => editor.chain().focus().toggleBold().run()}
+            icon={Bold}
+            label="Bold (⌘B)"
+          />
+          <ToolbarButton
+            active={editor.isActive("italic")}
+            onClick={() => editor.chain().focus().toggleItalic().run()}
+            icon={Italic}
+            label="Italic (⌘I)"
+          />
+          <div className="w-px h-6 bg-[color:var(--color-border)]" />
+          <ToolbarButton
+            active={editor.isActive("bulletList")}
+            onClick={() => editor.chain().focus().toggleBulletList().run()}
+            icon={List}
+            label="Bullet List"
+          />
+          <ToolbarButton
+            active={editor.isActive("orderedList")}
+            onClick={() => editor.chain().focus().toggleOrderedList().run()}
+            icon={ListOrdered}
+            label="Numbered List"
+          />
+          <div className="w-px h-6 bg-[color:var(--color-border)]" />
+          <ToolbarButton
+            active={editor.isActive("blockquote")}
+            onClick={() => editor.chain().focus().toggleBlockquote().run()}
+            icon={Quote}
+            label="Quote"
+          />
+          <ToolbarButton
+            active={editor.isActive("codeBlock")}
+            onClick={() => editor.chain().focus().toggleCodeBlock().run()}
+            icon={Code}
+            label="Code Block"
+          />
+          <div className="w-px h-6 bg-[color:var(--color-border)]" />
+          <button
+            className="p-2 rounded-lg transition-colors bg-gradient-to-r from-blue-500 to-purple-500 text-white hover:opacity-90"
+            onClick={() => setAiOpen(true)}
+            aria-label="AI Assistant (⌘J)"
+            title="AI Assistant (⌘J)"
+          >
+            <Sparkles className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
+      {/* Full-page editor - no boundaries */}
+      <div className="min-h-[calc(100vh-12rem)] relative">
+        {mounted && editor ? <EditorContent editor={editor} /> : <div className="min-h-[60vh]" />}
+
+        {/* AI Context Menu - appears on text selection */}
+        {mounted && editor && <AiContextMenu editor={editor} />}
       </div>
 
-      <div className="rounded-3xl bg-[color:var(--color-surface)]/90 border border-[color:var(--color-border)]/60 shadow-lg p-4 sm:p-6 lg:p-8 min-h-[60vh]">
-        {mounted && editor ? <EditorContent editor={editor} /> : <div className="min-h-[40vh]" />}
-      </div>
-    </div>
+      {/* AI Palette - ⌘J or double-space trigger */}
+      <AIPalette open={aiOpen} onClose={() => setAiOpen(false)} onRun={handleAI} />
+    </>
   );
 }

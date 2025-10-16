@@ -53,6 +53,110 @@ html.dark {
   hr {
     border-color: var(--color-border);
   }
+
+  /* Tiptap Editor Styles - Notion-like clean appearance */
+  .tiptap {
+    outline: none;
+    max-width: none;
+    padding: 2rem 0;
+  }
+
+  .tiptap p {
+    margin: 0.6rem 0;
+    line-height: 1.7;
+  }
+
+  .tiptap h1 {
+    font-size: 2.5rem;
+    line-height: 1.2;
+    font-weight: 700;
+    margin: 1.5rem 0 0.8rem;
+  }
+
+  .tiptap h2 {
+    font-size: 1.875rem;
+    line-height: 1.3;
+    font-weight: 700;
+    margin: 1.25rem 0 0.6rem;
+  }
+
+  .tiptap h3 {
+    font-size: 1.5rem;
+    line-height: 1.4;
+    font-weight: 600;
+    margin: 1rem 0 0.5rem;
+  }
+
+  .tiptap ul,
+  .tiptap ol {
+    padding-left: 1.5rem;
+    margin: 0.6rem 0;
+  }
+
+  .tiptap li {
+    margin: 0.25rem 0;
+  }
+
+  .tiptap blockquote {
+    border-left: 3px solid var(--color-border);
+    padding-left: 1rem;
+    margin: 1rem 0;
+    font-style: italic;
+    color: var(--color-muted);
+  }
+
+  .tiptap code {
+    background-color: var(--color-accent);
+    padding: 0.2rem 0.4rem;
+    border-radius: 0.25rem;
+    font-size: 0.9em;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  }
+
+  .tiptap pre {
+    background-color: var(--color-accent);
+    border: 1px solid var(--color-border);
+    border-radius: 0.5rem;
+    padding: 1rem;
+    margin: 1rem 0;
+    overflow-x: auto;
+  }
+
+  .tiptap pre code {
+    background: none;
+    padding: 0;
+    font-size: 0.875rem;
+  }
+
+  .tiptap a {
+    color: #3b82f6;
+    text-decoration: underline;
+    cursor: pointer;
+  }
+
+  .tiptap a:hover {
+    color: #2563eb;
+  }
+
+  .tiptap hr {
+    border: none;
+    border-top: 1px solid var(--color-border);
+    margin: 1.5rem 0;
+  }
+
+  /* Empty placeholder styling */
+  .tiptap p.is-editor-empty:first-child::before {
+    color: var(--color-muted);
+    content: attr(data-placeholder);
+    float: left;
+    height: 0;
+    pointer-events: none;
+  }
+
+  /* Selection styling */
+  .tiptap ::selection {
+    background-color: rgba(59, 130, 246, 0.3);
+  }
 }
 
 @layer utilities {
