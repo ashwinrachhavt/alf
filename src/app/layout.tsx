@@ -17,9 +17,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   const content = (
     <html lang="en" suppressHydrationWarning>
       <body className="antialiased">
-        <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
+        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
           <Nav />
-          <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6">{children}</main>
+          <main>{children}</main>
           {process.env.NODE_ENV === 'development' && (
             <style>{`.cl-bannertoast, .cl-component-bannertoast { display: none !important; }`}</style>
           )}

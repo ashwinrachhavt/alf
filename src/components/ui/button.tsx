@@ -3,22 +3,24 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 dark:focus-visible:ring-neutral-100 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg font-semibold transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
   {
     variants: {
       variant: {
         primary:
-          "bg-black dark:bg-white text-white dark:text-black hover:opacity-90 focus-visible:ring-neutral-900 dark:focus-visible:ring-blue-400",
+          "bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg hover:shadow-xl",
         secondary:
-          "border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-900 hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-900 dark:text-white",
-        ghost: "hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-900 dark:text-neutral-100",
-        destructive: "bg-red-600 dark:bg-red-500 text-white hover:bg-red-700 dark:hover:bg-red-600",
-        link: "text-neutral-900 dark:text-neutral-100 underline-offset-4 hover:underline",
+          "bg-secondary text-secondary-foreground hover:bg-secondary/80 border border-border",
+        outline:
+          "border-2 border-input bg-background hover:bg-accent hover:text-accent-foreground hover:border-primary/50",
+        ghost: "hover:bg-accent hover:text-accent-foreground",
+        destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90 shadow-md",
+        link: "text-primary underline-offset-4 hover:underline",
       },
       size: {
-        sm: "h-8 px-3 text-sm",
-        md: "h-10 px-4 text-base",
-        lg: "h-12 px-6 text-lg",
+        sm: "h-9 px-3 text-sm",
+        md: "h-10 px-4 text-sm",
+        lg: "h-11 px-8 text-base",
         icon: "h-10 w-10",
       },
     },

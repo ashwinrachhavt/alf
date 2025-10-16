@@ -6,40 +6,39 @@ import ArcanePyramid from "@/components/icons/ArcanePyramid";
 
 export default function Nav() {
   return (
-    <header className="sticky top-0 z-50 border-b border-neutral-200/50 dark:border-neutral-800/50 bg-white/80 dark:bg-neutral-900/80 backdrop-blur-xl">
-      <div className="mx-auto max-w-7xl px-6 h-14 flex items-center justify-between">
+    <header className="sticky top-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-xl shadow-sm">
+      <div className="mx-auto max-w-7xl px-6 h-16 flex items-center justify-between">
         <nav className="flex items-center gap-6">
-          <Link href="/" className="flex items-center gap-2 font-semibold text-lg group">
-            <ArcanePyramid className="w-6 h-6 transition-transform group-hover:scale-110" />
-            <span>ALF</span>
+          <Link href="/" className="flex items-center gap-2 font-bold text-xl group text-foreground">
+            <ArcanePyramid className="w-7 h-7 transition-transform group-hover:scale-110 group-hover:rotate-12 duration-300" />
+            <span className="bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">ALF</span>
           </Link>
-          <div className="hidden md:flex items-center gap-4 text-sm text-neutral-900 dark:text-neutral-100">
-            
+          <div className="hidden md:flex items-center gap-2 text-sm font-medium">
             <Link
               href="/research"
-              className="px-3 py-1.5 rounded-md hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+              className="px-4 py-2 rounded-lg text-foreground hover:bg-accent hover:text-accent-foreground transition-all duration-200"
             >
               Deep Research
             </Link>
             <Link
               href="/notes"
-              className="px-3 py-1.5 rounded-md hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+              className="px-4 py-2 rounded-lg text-foreground hover:bg-accent hover:text-accent-foreground transition-all duration-200"
             >
               Notes
             </Link>
           </div>
         </nav>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <button
-            className="p-2 text-neutral-900 dark:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-md transition-colors"
+            className="p-2 text-muted-foreground hover:text-foreground hover:bg-accent rounded-lg transition-all duration-200"
             title="Search"
           >
             <Search className="w-5 h-5" />
           </button>
 
           <button
-            className="p-2 text-neutral-900 dark:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-md transition-colors"
+            className="p-2 text-muted-foreground hover:text-foreground hover:bg-accent rounded-lg transition-all duration-200"
             title="Notifications"
           >
             <Bell className="w-5 h-5" />
@@ -49,12 +48,12 @@ export default function Nav() {
 
           <SignedOut>
             <SignInButton mode="modal">
-              <button className="px-4 py-2 text-sm font-medium rounded-md text-neutral-900 dark:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors">
+              <button className="px-4 py-2 text-sm font-medium rounded-lg text-foreground hover:bg-accent hover:text-accent-foreground transition-all duration-200">
                 Sign In
               </button>
             </SignInButton>
             <SignUpButton mode="modal">
-              <button className="px-4 py-2 text-sm font-medium bg-black dark:bg-white text-white dark:text-black rounded-md hover:opacity-90 transition-opacity">
+              <button className="px-4 py-2 text-sm font-medium bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-all duration-200 shadow-md hover:shadow-lg">
                 Sign Up
               </button>
             </SignUpButton>

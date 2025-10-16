@@ -57,12 +57,12 @@ function DocumentSphere({ doc, onClick, isSelected, clusterColors }: DocumentSph
 
       {(hovered || isSelected) && (
         <Html distanceFactor={8} position={[0, 0.8, 0]} center>
-          <div className="bg-white/90 dark:bg-neutral-900/90 backdrop-blur px-3 py-1.5 rounded-lg shadow-lg border border-neutral-200 dark:border-neutral-800 whitespace-nowrap pointer-events-none">
-            <div className="text-xs font-semibold text-neutral-900 dark:text-neutral-100">
+          <div className="bg-card/90 backdrop-blur px-3 py-1.5 rounded-lg shadow-lg border border-border whitespace-nowrap pointer-events-none">
+            <div className="text-xs font-semibold text-card-foreground">
               {doc.title}
             </div>
             {isSelected && (
-              <div className="text-[10px] text-neutral-600 dark:text-neutral-400 mt-0.5 max-w-[200px] truncate">
+              <div className="text-[10px] text-muted-foreground mt-0.5 max-w-[200px] truncate">
                 {doc.preview}
               </div>
             )}
@@ -187,16 +187,16 @@ export default function DocumentExplorer({
   };
 
   return (
-    <div className="w-full rounded-2xl overflow-hidden bg-gradient-to-br from-neutral-50 via-neutral-100 to-neutral-50 dark:from-neutral-950 dark:via-neutral-900 dark:to-neutral-950 relative" style={{ height }}>
+    <div className="w-full rounded-2xl overflow-hidden bg-gradient-to-br from-muted/30 via-background to-muted/30 relative" style={{ height }}>
       <Canvas
         shadows
         camera={{ position: [0, 0, 15], fov: 60 }}
         gl={{ antialias: true, alpha: true }}
       >
-        <ambientLight intensity={0.4} />
-        <directionalLight position={[10, 10, 5]} intensity={0.6} />
-        <pointLight position={[-10, -10, -5]} intensity={0.3} color="#8b5cf6" />
-        <pointLight position={[10, -10, 5]} intensity={0.3} color="#3b82f6" />
+        <ambientLight intensity={0.5} />
+        <directionalLight position={[10, 10, 5]} intensity={0.7} />
+        <pointLight position={[-10, -10, -5]} intensity={0.4} color="#8b5cf6" />
+        <pointLight position={[10, -10, 5]} intensity={0.4} color="#3b82f6" />
 
         <fog attach="fog" args={['#000000', 10, 50]} />
 
@@ -224,28 +224,28 @@ export default function DocumentExplorer({
       </Canvas>
 
       {selectedDoc && (
-        <div className="absolute bottom-4 left-4 right-4 bg-white/95 dark:bg-neutral-900/95 backdrop-blur-xl rounded-xl shadow-2xl border border-neutral-200 dark:border-neutral-800 p-4 max-w-md">
+        <div className="absolute bottom-4 left-4 right-4 bg-card/95 backdrop-blur-xl rounded-xl shadow-2xl border border-border p-4 max-w-md">
           <div className="flex items-start justify-between gap-3">
             <div className="flex-1">
-              <h3 className="font-semibold text-sm mb-1 text-neutral-900 dark:text-neutral-100">
+              <h3 className="font-semibold text-sm mb-1 text-card-foreground">
                 {selectedDoc.title}
               </h3>
-              <p className="text-xs text-neutral-600 dark:text-neutral-400 line-clamp-2 mb-2">
+              <p className="text-xs text-muted-foreground line-clamp-2 mb-2">
                 {selectedDoc.preview}
               </p>
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400">
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
                   Cluster {(selectedDoc.cluster || 0) + 1}
                 </span>
                 {selectedDoc.category && (
-                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400">
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
                     {selectedDoc.category}
                   </span>
                 )}
                 {selectedDoc.url && (
                   <Link
                     href={selectedDoc.url as any}
-                    className="text-[10px] px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors"
+                    className="text-[10px] px-2 py-0.5 rounded-full bg-primary/20 text-primary hover:bg-primary/30 transition-colors"
                   >
                     Open →
                   </Link>
@@ -254,7 +254,7 @@ export default function DocumentExplorer({
             </div>
             <button
               onClick={() => setSelectedDoc(null)}
-              className="text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200 transition-colors"
+              className="text-muted-foreground hover:text-foreground transition-colors"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -264,8 +264,8 @@ export default function DocumentExplorer({
         </div>
       )}
 
-      <div className="absolute top-4 left-4 bg-white/80 dark:bg-neutral-900/80 backdrop-blur px-3 py-2 rounded-lg text-xs text-neutral-600 dark:text-neutral-400">
-        <div className="font-semibold mb-1">Knowledge Space</div>
+      <div className="absolute top-4 left-4 bg-card/80 backdrop-blur px-3 py-2 rounded-lg text-xs text-muted-foreground border border-border/50">
+        <div className="font-semibold mb-1 text-card-foreground">Knowledge Space</div>
         <div>Drag to rotate • Scroll to zoom • Click to explore</div>
       </div>
     </div>
