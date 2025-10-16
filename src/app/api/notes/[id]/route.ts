@@ -5,10 +5,11 @@ import prisma from "@/lib/prisma";
  * GET /api/notes/:id
  * Fetch a single note including its markdown and Tiptap content.
  */
-export async function GET(_: Request, { params }: { params: { id: string } }) {
+export async function GET(_: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params;
     const note = await prisma.note.findUnique({
-      where: { id: params.id },
+      where: { id },
       select: {
         id: true,
         title: true,
@@ -39,12 +40,13 @@ export async function GET(_: Request, { params }: { params: { id: string } }) {
  * PATCH /api/notes/:id
  * Update a note's title, markdown, and structured content.
  */
-export async function PATCH(req: Request, { params }: { params: { id: string } }) {
+export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params;
     const body = await req.json();
 
     const updated = await prisma.note.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         title: body.title ?? undefined,
         icon: body.icon ?? undefined,

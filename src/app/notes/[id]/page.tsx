@@ -86,31 +86,40 @@ export default function NoteEditorPage() {
   }
 
   return (
-    <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 min-h-screen flex flex-col">
+    <div className="min-h-screen bg-[color:var(--color-background)]">
       {/* Sticky Header */}
-      <div className="sticky top-14 z-30 bg-[color:var(--color-background)]/80 backdrop-blur border-b border-[color:var(--color-border)]/60">
-        <div className="flex items-center justify-between py-3">
-          <div className="flex items-center gap-3">
-            <button onClick={backToList} className="text-sm text-[color:var(--color-muted)] hover:underline">All Notes</button>
-            <input
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              className="text-xl md:text-2xl font-semibold bg-transparent outline-none border-b border-transparent focus:border-neutral-300 dark:focus:border-neutral-700 px-1 text-[color:var(--color-foreground)]"
-              placeholder="Untitled Note"
-            />
+      <div className="sticky top-0 z-30 bg-[color:var(--color-background)]/95 backdrop-blur-md border-b border-[color:var(--color-border)]">
+        <div className="mx-auto max-w-5xl px-6 md:px-10 lg:px-16">
+          <div className="flex items-center justify-between py-4">
+            <div className="flex items-center gap-3 flex-1 min-w-0">
+              <button
+                onClick={backToList}
+                className="text-sm text-[color:var(--color-muted)] hover:text-[color:var(--color-foreground)] transition-colors"
+              >
+                ← All Notes
+              </button>
+              <div className="h-4 w-px bg-[color:var(--color-border)]" />
+              <input
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                className="text-xl md:text-2xl font-bold bg-transparent outline-none flex-1 min-w-0 text-[color:var(--color-foreground)] placeholder:text-[color:var(--color-muted)]"
+                placeholder="Untitled Note"
+              />
+            </div>
+            <button
+              onClick={save}
+              disabled={saving}
+              className="ml-4 px-6 py-2 rounded-lg bg-[color:var(--color-foreground)] text-[color:var(--color-background)] disabled:opacity-50 hover:opacity-90 transition-all font-medium flex items-center gap-2 shadow-sm"
+            >
+              <Save className="w-4 h-4" />
+              {saving ? "Saving…" : status || "Save"}
+            </button>
           </div>
-          <button
-            onClick={save}
-            disabled={saving}
-            className="px-4 py-2 rounded-lg bg-black dark:bg-white text-white dark:text-black disabled:opacity-50 shadow-sm"
-          >
-            {saving ? "Saving…" : status || "Save"}
-          </button>
         </div>
       </div>
 
-      {/* Content */}
-      <div className="flex-1 min-h-0 py-4">
+      {/* Editor Content - Full page, no boundaries */}
+      <div className="mx-auto max-w-5xl px-6 md:px-10 lg:px-16 py-8">
         <NoteWysiwyg
           initialMarkdown={markdown}
           initialContent={tiptapContent}
